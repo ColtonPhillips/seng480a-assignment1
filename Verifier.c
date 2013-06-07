@@ -33,16 +33,22 @@ typedef struct {
 	int	bytecodePosition;
 	int	changed;
 	int	stackHeight;
-	char	typecodeList[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE];
+	char	locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE];
+	char	stack[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE];
 } deet;
 
-void print_deet(deet* d) {
+void print_deet(deet* d, int numLocals) {
 
 	int i = 0;
 
 	printf("[deet %lu] position: %i, changed: %i, stack height: %i\n", (unsigned long)d, d->bytecodePosition, d->changed, d->stackHeight);
-	for (i = 0; i < MAX_NUMBER_OF_SLOTS; ++i) {
-		printf("\t%i:	%s\n", i, d->typecodeList[i]);
+	printf("\tlocals:\n");
+	for (i = 0; i < numLocals; ++i) {
+		printf("\t\t%i:	%s\n", i, d->locals[i]);
+	}
+	printf("\tstack:\n");
+	for (i = 0; i < d->stackHeight; ++i) {
+		printf("\t\t%i:	%s\n", i, d->stack[i]);
 	}
 }
 
@@ -55,8 +61,22 @@ void initialize_deet(int bytecodePosition, deet* d) {
 	d->stackHeight = -1;
 
 	for (i = 0; i < MAX_NUMBER_OF_SLOTS; ++i) {
-		strcpy(d->typecodeList[i], "?");
+		strcpy(d->locals[i], "-");
+		strcpy(d->stack[i], "-");
 	}
+}
+
+void initialize_first_deet(method_info *m, char** initialTypeList, deet* d) {
+
+	int i = 0;
+
+	for (i = 0; i < m->max_locals; ++i) {
+
+		strcpy(d->locals[i], initialTypeList[i]);
+	}
+
+	d->changed = 1;
+	d->stackHeight = 0;
 }
 
 
@@ -82,7 +102,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
     // Do include tracing output statements in your code
     // controlled by the tracingExecution variable to help
     // you debug the verification algorithm.
-    
+     
     // Sratch variables
     int i = 0;
   
@@ -91,6 +111,8 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
     for (i = 0; i < m->code_length; ++i) {
 	    initialize_deet(i, deets + i);
     }
+
+    initialize_first_deet(m, initState, deets);
 
     // while D contains an entry with a set change bit do
     //         set change bit to 0 in this entry;
