@@ -26,6 +26,7 @@ unsigned int immediate_var0_codes[] = {0x1a, 0x1e, 0x22, 0x26, 0x2a, 0x3b, 0x3f,
 unsigned int immediate_var1_codes[] = {0x1b, 0x1f, 0x23, 0x27, 0x2b, 0x3c, 0x40, 0x44, 0x48, 0x4c};
 unsigned int immediate_var2_codes[] = {0x1c, 0x20, 0x24, 0x28, 0x2c, 0x3d, 0x41, 0x45, 0x49, 0x4d};
 unsigned int immediate_var3_codes[] = {0x1d, 0x21, 0x25, 0x29, 0x2d, 0x3e, 0x42, 0x46, 0x4a, 0x4e};
+unsigned int return_codes[] = {0Xac, 0Xad, 0Xae, 0Xaf, 0Xb0, 0Xb1, 0Xb2};
 
 #define number_of_immediate_codes sizeof(immediate_var0_codes)/sizeof(int)
 
@@ -63,13 +64,19 @@ typedef struct {
 	char	stack[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE];
 } deet;
 
-void print_deet(deet* d, int numLocals) {
+void print_deet(deet* d, method_info* m) {
 
 	int i = 0;
 
-	printf("[deet %lu] position: %i, changed: %i, stack height: %i\n", (unsigned long)d, d->bytecodePosition, d->changed, d->stackHeight);
+	printf("[deet %lu] position: %i, name: %s, changed: %i, stack height: %i\n",
+			(unsigned long)d,
+			d->bytecodePosition,
+			opcodes[m->code[d->bytecodePosition]].opcodeName,
+			d->changed,
+			d->stackHeight);
+
 	printf("\tlocals:\n");
-	for (i = 0; i < numLocals; ++i) {
+	for (i = 0; i < m->max_locals; ++i) {
 		printf("\t\t%i:	%s\n", i, d->locals[i]);
 	}
 	printf("\tstack:\n");
@@ -236,11 +243,21 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 
 		    // increment h and check that stack does not overflow;
 		    ++h;
-		    if (h > m->max_stack) die("stack overflow\n");
+		    if (h > m->max_stack) die("stack overflow (%i/%i)\n", h, m->max_stack);
 	    }
 
 	    // only check next position if instruction is not a return
-	    if (op == 0Xa9) continue;
+	    int isReturnCode = FALSE;
+	    for (i = 0; i < sizeof(return_codes)/sizeof(int); ++i) {
+		    
+		    if (op == return_codes[i]) {
+			    
+			    isReturnCode = TRUE;
+			    break;
+		    }
+	    }
+
+	    if (isReturnCode) continue;
 
 	    // for q = the bytecode position of each instruction that
 	    //         can execute immediately after op at position p do
@@ -256,7 +273,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    int	previousH		= deets[q].stackHeight,
 		        stackHeightWasSet	= (previousH >= 0);
 
-		    if (stackHeightWasSet && previousH != h) die("stack mismatch");
+		    if (stackHeightWasSet && previousH != h) die("stack mismatch\n");
 		    // TODO check types
 
 		    // merge h and t with the entry in D, updating that entry;
@@ -273,7 +290,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    }
 	    }
 
-	    print_deet(d, m->max_locals);
+	    print_deet(d, m);
     }
 
     free(deets);
