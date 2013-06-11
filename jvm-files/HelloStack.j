@@ -8,6 +8,7 @@
   .limit locals 1
 
 	iconst_0
+	nop
   return
 
 .end method

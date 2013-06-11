@@ -105,6 +105,14 @@ void initialize_first_deet(method_info *m, char** initialTypeList, deet* d) {
 	d->stackHeight = 0;
 }
 
+void get_next_bytecode_positions(int bytecodePosition, int op, int* qs) {
+
+	// TODO branches
+	
+	int numberOfAdditionalBytes = strlen(opcodes[op].inlineOperands);
+	qs[0] = bytecodePosition + numberOfAdditionalBytes + 1;
+}
+
 
 // Verify the bytecode of one method m from class file cf
 static void verifyMethod( ClassFile *cf, method_info *m ) {
@@ -170,6 +178,11 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    int h = d->stackHeight;
 
 	    // t = typecode list in this entry;
+	    char	locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE],
+			stack[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE];
+
+	    for (i = 0; i < m->max_locals; ++i) strcpy(locals[i], d->locals[i]);
+	    for (i = 0; i < h; ++i) strcpy(stack[i], d->stack[i]);
 
 	    // op = opcode at position p in byecode;
 	    unsigned int op = m->code[d->bytecodePosition];
@@ -219,23 +232,48 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    for (operandIndex = 0; operandIndex < rhsSize; ++operandIndex) {
 
 		    // push typecode of result onto the stack t;
-		    sprintf(d->stack[h], "%c", rhs[operandIndex]);
+		    sprintf(stack[h], "%c", rhs[operandIndex]);
 
 		    // increment h and check that stack does not overflow;
 		    ++h;
 		    if (h > m->max_stack) die("stack overflow\n");
 	    }
 
+	    // only check next position if instruction is not a return
+	    if (op == 0Xa9) continue;
+
 	    // for q = the bytecode position of each instruction that
 	    //         can execute immediately after op at position p do
-	    //     	    if an entry with position q exists in D then
-	    //     		    merge h and t with the entry in D, updating that entry;
-	    // if any incompatibilities were found then
-	    //         report an error;
-	    // if anything changed in that entry then
-	    //         set its change bit;
-	    // else // no q entry exists
-	    // add a new entry <q, 1, h, t> to D
+	    int q, qIndex, qs[] = {-1, -1};
+	    get_next_bytecode_positions(d->bytecodePosition, op, qs);
+	    for (qIndex = 0; qIndex < sizeof(qs); ++qIndex) {
+
+		    q = qs[qIndex];
+		    if (q < 0) break;
+
+		    // if any incompatibilities were found then
+		    //         report an error;
+		    int	previousH		= deets[q].stackHeight,
+		        stackHeightWasSet	= (previousH >= 0);
+
+		    if (stackHeightWasSet && previousH != h) die("stack mismatch");
+		    // TODO check types
+
+		    // merge h and t with the entry in D, updating that entry;
+		    deets[q].stackHeight = h;
+
+		    for (i = 0; i < m->max_locals; ++i)	strcpy(deets[q].locals[i], locals[i]);
+		    for (i = 0; i < h; ++i)		strcpy(deets[q].stack[i], stack[i]);
+
+		    // if anything changed in that entry then
+		    //         set its change bit;
+		    if (!stackHeightWasSet) {
+
+			    deets[q].changed = TRUE;
+		    }
+	    }
+
+	    print_deet(d, m->max_locals);
     }
 
     free(deets);
