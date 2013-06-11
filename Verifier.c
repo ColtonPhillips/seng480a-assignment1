@@ -14,6 +14,8 @@
 
 #define die(...) do { printf(__VA_ARGS__); fflush(stdout); exit(1); } while (0)
 
+#define got_here printf("got here %d\n", __LINE__);
+
 #define MAX_NUMBER_OF_SLOTS 20
 #define MAX_BUFFER_SIZE 200
 
@@ -175,6 +177,27 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    if (m->max_locals < 3) die("required local 2 and there are only %i locals\n", m->max_locals);
 	    if (is_in_immediate_codes(op, immediate_var3_codes))
 		    if (m->max_locals < 4) die("required local 3 and there are only %i locals\n", m->max_locals);
+
+	    // Get the lhs and rhs for the operator
+	    char	signature[MAX_BUFFER_SIZE],
+			lhs[MAX_BUFFER_SIZE],
+			rhs[MAX_BUFFER_SIZE];
+	    int		lhsSize,
+			rhsSize;
+
+	    // Copy the signature for manipulation
+	    strcpy(signature, opcodes[op].signature);
+
+	    // Copy the lhs characters
+	    lhsSize = strcspn(signature, ">");
+	    strncpy(lhs, signature, lhsSize);
+	    lhs[lhsSize] = '\0';
+
+	    // Copy the rhs characters
+	    rhsSize = strlen(signature) - lhsSize - 1;
+	    strcpy(rhs, (signature + lhsSize + 1));
+
+	    printf("%s > %s\n", lhs, rhs);
 
 	    // foreach stack operand accessed by op do
 	    //         decrement h and check that stack does not underflow;
