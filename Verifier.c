@@ -12,6 +12,8 @@
 #include "VerifierUtils.h"
 #include "Verifier.h"
 
+#define die(...) do { printf(__VA_ARGS__); fflush(stdout); exit(1); } while (0)
+
 #define MAX_NUMBER_OF_SLOTS 20
 #define MAX_BUFFER_SIZE 200
 
@@ -124,7 +126,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
     // Do include tracing output statements in your code
     // controlled by the tracingExecution variable to help
     // you debug the verification algorithm.
-     
+    
     // Sratch variables
     int i = 0;
 
@@ -166,13 +168,13 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    // if op comtains any immediate operands then
 	    //         check that any operands which are indexes are in range;
 	    if (is_in_immediate_codes(op, immediate_var0_codes))
-		    if (m->max_locals < 1) printf("required local 0 and there are only %i locals\n", m->max_locals);
+		    if (m->max_locals < 1) die("required local 0 and there are only %i locals\n", m->max_locals);
 	    if (is_in_immediate_codes(op, immediate_var1_codes))
-		    if (m->max_locals < 2) printf("required local 1 and there are only %i locals\n", m->max_locals);
+		    if (m->max_locals < 2) die("required local 1 and there are only %i locals\n", m->max_locals);
 	    if (is_in_immediate_codes(op, immediate_var2_codes))
-		    if (m->max_locals < 3) printf("required local 2 and there are only %i locals\n", m->max_locals);
+		    if (m->max_locals < 3) die("required local 2 and there are only %i locals\n", m->max_locals);
 	    if (is_in_immediate_codes(op, immediate_var3_codes))
-		    if (m->max_locals < 4) printf("required local 3 and there are only %i locals\n", m->max_locals);
+		    if (m->max_locals < 4) die("required local 3 and there are only %i locals\n", m->max_locals);
 
 	    // foreach stack operand accessed by op do
 	    //         decrement h and check that stack does not underflow;

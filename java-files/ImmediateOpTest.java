@@ -3,4 +3,9 @@ public class ImmediateOpTest {
 
 		foo = 1;
 	}
+
+	public static void main(String[] args) {
+
+		doSomething(2);
+	}
 }
