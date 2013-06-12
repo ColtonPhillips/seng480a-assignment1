@@ -1,5 +1,7 @@
 /* VerifierUtils.c */
 
+// Note: two major errors in AnalyzeInvoke corrected.  15:00, 8 June 2013.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -182,22 +184,35 @@ char **MapSigToInitState( ClassFile *cf, method_info *m, char **retTypep ) {
 //
 char **AnalyzeInvoke( ClassFile *cf, int ix, int isStatic, char **retTypep, int *cntp ) {
     static char *result[256]; // max number of parameters is 256
-    char *dummy;
     int i, cnt;
-    char *sig = GetCPItemAsString(cf, ix);
+
+    // methodInfo receive a value like: "Foo.Bar(I,F)V" where Foo is the class
+    // which owns method Bar, and "(I,F)V" is the method signature
+    char *methodInfo = GetCPItemAsString(cf, ix);
+    
+    char *sig = strchr(methodInfo, '(');  // get the signature part
+    assert(sig != NULL);
     
     // clear the array
     for( i = 0;  i < 256; i++)
         result[0] = NULL;
 
     if (!isStatic) {
-        // local #0 is an implicit 'this' argument
-        cnt = ExtractTypesFromSignature(result+1, result, sig);
+        // local #0 is an implicit 'this' argument, whose type is the
+        // class which owns the method
+        cnt = ExtractTypesFromSignature(result+1, retTypep, sig);
+        char *dotp = strchr(methodInfo, '.');
+        assert(dotp != NULL);
+        int len = dotp-methodInfo;
+        result[0] = SafeMalloc(len+3);
+        strcpy(result[0], "AL");
+        strncpy(result[0]+2, methodInfo, len); // copy the class name
+        result[0][len+2] = '\0';
         cnt++;
     } else {
-        cnt = ExtractTypesFromSignature(result, &dummy, sig);
+        cnt = ExtractTypesFromSignature(result, retTypep, sig);
     }
-    SafeFree(sig);
+    SafeFree(methodInfo);
     *cntp = cnt;
     return result;
 }
