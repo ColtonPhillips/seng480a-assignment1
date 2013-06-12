@@ -33,7 +33,7 @@ unsigned int return_codes[] = {0Xac, 0Xad, 0Xae, 0Xaf, 0Xb0, 0Xb1, 0Xb2};
 unsigned int branch_codes[] = {0X99, 0X9a, 0X9b, 0X9c, 0X9d, 0X9e, 0X9f, 0Xa0, 0Xa1, 0Xa2, 0Xa3, 0Xa4, 0Xa5, 0Xa6};
 unsigned int invoke_codes[] = {0Xb6, 0Xb7, 0Xb8, 0Xb9, 0Xba};
 unsigned int static_invoke_codes[] = {0Xb8};
-char wildcard_types[] = {'W', 'X', 'Y', 'Z'};
+char wildcard_types[][2] = {"W", "X", "Y", "Z"};
 
 #define number_of_immediate_codes sizeof_int_array(immediate_var0_codes)
 
@@ -80,12 +80,12 @@ int is_return_instruction(int op) {
 	return is_in_instruction_set(op, return_codes, sizeof_int_array(return_codes));
 }
 
-int is_wildcard_type(char type) {
+int is_wildcard_type(char* type) {
 
 	int i = 0;
-	for (i = 0; i < sizeof_array(wildcard_types, char); ++i) {
+	for (i = 0; i < sizeof_array(wildcard_types, char*); ++i) {
 
-		if (type == wildcard_types[i]) return TRUE;
+		if (!strcmp(type, wildcard_types[i])) return TRUE;
 	}
 
 	return FALSE;
@@ -117,10 +117,10 @@ void print_deet(deet* d, method_info* m) {
 
 	int i = 0;
 
-	printf("[deet %lu] position: %i, name: %s, changed: %i, stack height: %i\n",
+	printf("[%s | %lu] position: %i, changed: %i, stack height: %i\n",
+			opcodes[m->code[d->bytecodePosition]].opcodeName,
 			(unsigned long)d,
 			d->bytecodePosition,
-			opcodes[m->code[d->bytecodePosition]].opcodeName,
 			d->changed,
 			d->stackHeight);
 
@@ -177,6 +177,34 @@ void get_next_bytecode_positions(deet* d, method_info* m, int* qs) {
 	}
 }
 
+void parse_results(char* returnType, char results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE], int* resultCount) {
+	
+	switch (*returnType) {
+		case 'I':
+			strcpy(results[0], "I");
+			*resultCount = 1;
+			break;
+		case 'L':
+			strcpy(results[0], "L");
+			strcpy(results[1], "l");
+			*resultCount = 2;
+			break;
+		case 'D':
+			strcpy(results[0], "D");
+			strcpy(results[1], "d");
+			*resultCount = 2;
+			break;
+		case 'A':
+			strcpy(results[0], returnType);
+			*resultCount = 1;
+			break;
+		case '-':
+		default:
+			// Void - copy nothing
+			*resultCount = 0;
+			break;
+	}
+}
 
 // Verify the bytecode of one method m from class file cf
 static void verifyMethod( ClassFile *cf, method_info *m ) {
@@ -264,53 +292,55 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    if (m->max_locals < 4) die("required local 3 and there are only %i locals\n", m->max_locals);
 
 	    // Get the lhs and rhs for the operator
-	    char	signature[MAX_BUFFER_SIZE],
-			lhs[MAX_BUFFER_SIZE] = {'\0'},
-			rhs[MAX_BUFFER_SIZE] = {'\0'};
-	    int		lhsSize,
-			rhsSize,
-			typesMatch;
+	    char	operands[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE],
+			results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE];
+	    int		typesMatch, operandCount, resultsCount;
 
 	    // Copy the signature for manipulation
 	    // Invoke instructions
 	    if (is_invoke_instruction(op)) {
 
 		    char	*retType		= NULL;
-		    int		argCount		= 0,
-				invokeTarget		= (m->code[p+1] << 8) | (m->code[p+2]);
-		    char	**invokeAnalysisResult	= AnalyzeInvoke(cf, invokeTarget, is_static_invoke(op), &retType, &argCount);
+		    int 	invokeTarget		= (m->code[p+1] << 8) | (m->code[p+2]);
+		    char	**invokeAnalysisResult	= AnalyzeInvoke(cf, invokeTarget, is_static_invoke(op), &retType, &operandCount);
 
 		    // Parse arguments
-		    lhsSize = argCount;
-		    for (i = 0; i < argCount; ++i) {
+		    for (i = 0; i < operandCount; ++i) {
 
-			    lhs[i] = invokeAnalysisResult[i][0];
+			    strcpy(operands[i], invokeAnalysisResult[i]);
 		    }
 
 		    // Copy return type
-		    strcpy(rhs, retType);
-		    rhsSize = strlen(rhs);
-
+		    parse_results(retType, results, &resultsCount);
 		    FreeTypeDescriptor(retType);
 	    }
 
-	    // Regular functions:
+	    // Regular instructions:
 	    else {
+		    char	signature[MAX_BUFFER_SIZE],
+				lhs[MAX_BUFFER_SIZE] = {'\0'},
+				rhs[MAX_BUFFER_SIZE] = {'\0'};
+		    int		lhsSize;
+
 		    strcpy(signature, opcodes[op].signature);
 
 		    // Copy the lhs characters
+		    // Since we're reading these from the opcodes, each value should be one character
 		    lhsSize = strcspn(signature, ">");
 		    strncpy(lhs, signature, lhsSize);
-		    lhs[lhsSize] = '\0';
+		    for (i = 0; i < lhsSize; ++i) {
+			    sprintf(operands[i], "%c", lhs[0]);
+		    }
+		    operandCount = lhsSize;
 
 		    // Copy the rhs characters
-		    rhsSize = strlen(signature) - lhsSize - 1;
 		    strcpy(rhs, (signature + lhsSize + 1));
+		    parse_results(rhs, results, &resultsCount);
 	    }
 
 	    // foreach stack operand accessed by op do
 	    int operandIndex;
-	    for (operandIndex = 0; operandIndex < lhsSize; ++operandIndex) {
+	    for (operandIndex = 0; operandIndex < operandCount; ++operandIndex) {
 
 		   // decrement h and check that stack does not underflow;
 		   --h;
@@ -318,18 +348,19 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 
 		    // pop stack t and check datatype compatibility of that operand;
 		    // TODO reference types?!?
-		    if (!is_wildcard_type(lhs[operandIndex])) {
+		    if (!is_wildcard_type(operands[operandIndex])) {
 
-			    typesMatch = (lhs[operandIndex] == stack[h][0]);
-			    if (!typesMatch) die("type mismatch when popping stack (expected %c, got %c)\n", lhs[operandIndex], stack[h][0]);
+			    // TODO: lub
+			    typesMatch = (!strcmp(operands[operandIndex], stack[h]));
+			    if (!typesMatch) die("type mismatch when popping stack (expected %s, got %s)\n", operands[operandIndex], stack[h]);
 		    }
 	    }
 
 	    // foreach stack result generated by op do
-	    for (operandIndex = 0; operandIndex < rhsSize; ++operandIndex) {
+	    for (operandIndex = 0; operandIndex < resultsCount; ++operandIndex) {
 
 		    // push typecode of result onto the stack t;
-		    sprintf(stack[h], "%c", rhs[operandIndex]);
+		    sprintf(stack[h], "%s", results[operandIndex]);
 
 		    // increment h and check that stack does not overflow;
 		    ++h;
