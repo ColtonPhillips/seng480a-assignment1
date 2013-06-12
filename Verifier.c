@@ -27,6 +27,7 @@ unsigned int immediate_var1_codes[] = {0x1b, 0x1f, 0x23, 0x27, 0x2b, 0x3c, 0x40,
 unsigned int immediate_var2_codes[] = {0x1c, 0x20, 0x24, 0x28, 0x2c, 0x3d, 0x41, 0x45, 0x49, 0x4d};
 unsigned int immediate_var3_codes[] = {0x1d, 0x21, 0x25, 0x29, 0x2d, 0x3e, 0x42, 0x46, 0x4a, 0x4e};
 unsigned int return_codes[] = {0Xac, 0Xad, 0Xae, 0Xaf, 0Xb0, 0Xb1, 0Xb2};
+unsigned int branch_codes[] = {0X99, 0X9a, 0X9b, 0X9c, 0X9d, 0X9e, 0X9f, 0Xa0, 0Xa1, 0Xa2, 0Xa3, 0Xa4, 0Xa5, 0Xa6};
 
 #define number_of_immediate_codes sizeof(immediate_var0_codes)/sizeof(int)
 
@@ -112,12 +113,30 @@ void initialize_first_deet(method_info *m, char** initialTypeList, deet* d) {
 	d->stackHeight = 0;
 }
 
-void get_next_bytecode_positions(int bytecodePosition, int op, int* qs) {
+int is_branch_instruction(int op) {
 
-	// TODO branches
-	
+	int i = 0;
+	for (i = 0; i < sizeof(branch_codes)/sizeof(int); ++i) {
+
+		if (op == branch_codes[i]) return TRUE;
+	}
+
+	return FALSE;
+}
+
+void get_next_bytecode_positions(deet* d, method_info* m, int* qs) {
+
+	int op = m->code[d->bytecodePosition];
+
+	// The immediate next instruction
 	int numberOfAdditionalBytes = strlen(opcodes[op].inlineOperands);
-	qs[0] = bytecodePosition + numberOfAdditionalBytes + 1;
+	qs[0] = d->bytecodePosition + numberOfAdditionalBytes + 1;
+
+	// Branch instructions
+	if (is_branch_instruction(op)) {
+		int offset = (m->code[d->bytecodePosition + 1] << 8) | (m->code[d->bytecodePosition + 2]);
+		qs[1] = d->bytecodePosition + offset;
+	}
 }
 
 
@@ -266,8 +285,8 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    // for q = the bytecode position of each instruction that
 	    //         can execute immediately after op at position p do
 	    int q, qIndex, qs[] = {-1, -1};
-	    get_next_bytecode_positions(d->bytecodePosition, op, qs);
-	    for (qIndex = 0; qIndex < sizeof(qs); ++qIndex) {
+	    get_next_bytecode_positions(d, m, qs);
+	    for (qIndex = 0; qIndex < sizeof(qs) / sizeof(int); ++qIndex) {
 
 		    q = qs[qIndex];
 		    if (q < 0) break;
@@ -293,8 +312,6 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			    deets[q].changed = TRUE;
 		    }
 	    }
-
-	    print_deet(d, m);
     }
 
     free(deets);
