@@ -3,20 +3,21 @@
 .class public HelloMethodCalls
 .super java/lang/Object
 
-.method public static doFoo(I)I
+.method public static doFoo(II)I
 	.limit stack 2
 	.limit locals 2
-	iload_0
 	iconst_1
+	iconst_0
 	iadd
 	ireturn
 .end method
 
 .method public static main([Ljava/lang/String;)V
 	.limit stack 2
-	.limit locals 2
-	iconst_2
-	invokestatic	HelloMethodCalls/doFoo(I)I
+	.limit locals 3
+	iconst_0
+	iconst_1
+	invokestatic	HelloMethodCalls/doFoo(II)I
 	pop
 	return
 .end method
