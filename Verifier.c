@@ -296,21 +296,20 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE];
 	    int		typesMatch, operandCount, resultsCount;
 
-	    // Copy the signature for manipulation
-	    // Invoke instructions
+	    // Invoke instructions:
 	    if (is_invoke_instruction(op)) {
 
 		    char	*retType		= NULL;
 		    int 	invokeTarget		= (m->code[p+1] << 8) | (m->code[p+2]);
 		    char	**invokeAnalysisResult	= AnalyzeInvoke(cf, invokeTarget, is_static_invoke(op), &retType, &operandCount);
 
-		    // Parse arguments
+		    // Parse operands
 		    for (i = 0; i < operandCount; ++i) {
 
 			    strcpy(operands[i], invokeAnalysisResult[i]);
 		    }
 
-		    // Copy return type
+		    // Parse results
 		    parse_results(retType, results, &resultsCount);
 		    FreeTypeDescriptor(retType);
 	    }
@@ -322,10 +321,11 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 				rhs[MAX_BUFFER_SIZE] = {'\0'};
 		    int		lhsSize;
 
+		    // Copy the signature for manipulation
 		    strcpy(signature, opcodes[op].signature);
 
 		    // Copy the lhs characters
-		    // Since we're reading these from the opcodes, each value should be one character
+		    // Since we're reading these from the opcodes, each stack value should be one character (reference is just an A)
 		    lhsSize = strcspn(signature, ">");
 		    strncpy(lhs, signature, lhsSize);
 		    for (i = 0; i < lhsSize; ++i) {
@@ -333,7 +333,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    }
 		    operandCount = lhsSize;
 
-		    // Copy the rhs characters
+		    // Copy the rhs characters. Also one character to one stack value.
 		    strcpy(rhs, (signature + lhsSize + 1));
 		    parse_results(rhs, results, &resultsCount);
 	    }
