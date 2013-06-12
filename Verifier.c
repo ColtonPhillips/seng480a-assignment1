@@ -33,6 +33,7 @@ unsigned int return_codes[] = {0Xac, 0Xad, 0Xae, 0Xaf, 0Xb0, 0Xb1, 0Xb2};
 unsigned int branch_codes[] = {0X99, 0X9a, 0X9b, 0X9c, 0X9d, 0X9e, 0X9f, 0Xa0, 0Xa1, 0Xa2, 0Xa3, 0Xa4, 0Xa5, 0Xa6};
 unsigned int invoke_codes[] = {0Xb6, 0Xb7, 0Xb8, 0Xb9, 0Xba};
 unsigned int static_invoke_codes[] = {0Xb8};
+char wildcard_types[] = {'W', 'X', 'Y', 'Z'};
 
 #define number_of_immediate_codes sizeof_int_array(immediate_var0_codes)
 
@@ -80,8 +81,6 @@ int is_return_instruction(int op) {
 }
 
 int is_wildcard_type(char type) {
-
-	char wildcard_types[] = {'W', 'X', 'Y', 'Z'};
 
 	int i = 0;
 	for (i = 0; i < sizeof_array(wildcard_types, char); ++i) {
@@ -334,7 +333,6 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 
 		    // increment h and check that stack does not overflow;
 		    ++h;
-		    //if (h > m->max_stack) die("stack overflow (%i/%i with %s)\n", h, m->max_stack, opcodes[op].opcodeName);
 		    if (h > m->max_stack) die("stack overflow (%i/%i with %s)\n", h, m->max_stack, opcodes[op].opcodeName);
 	    }
 
