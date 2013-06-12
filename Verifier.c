@@ -22,14 +22,18 @@
 #define TRUE 1
 #define FALSE 0 
 
+#define sizeof_int_array(x) sizeof(x)/sizeof(int)
+
 unsigned int immediate_var0_codes[] = {0x1a, 0x1e, 0x22, 0x26, 0x2a, 0x3b, 0x3f, 0x43, 0x47, 0x4b};
 unsigned int immediate_var1_codes[] = {0x1b, 0x1f, 0x23, 0x27, 0x2b, 0x3c, 0x40, 0x44, 0x48, 0x4c};
 unsigned int immediate_var2_codes[] = {0x1c, 0x20, 0x24, 0x28, 0x2c, 0x3d, 0x41, 0x45, 0x49, 0x4d};
 unsigned int immediate_var3_codes[] = {0x1d, 0x21, 0x25, 0x29, 0x2d, 0x3e, 0x42, 0x46, 0x4a, 0x4e};
 unsigned int return_codes[] = {0Xac, 0Xad, 0Xae, 0Xaf, 0Xb0, 0Xb1, 0Xb2};
 unsigned int branch_codes[] = {0X99, 0X9a, 0X9b, 0X9c, 0X9d, 0X9e, 0X9f, 0Xa0, 0Xa1, 0Xa2, 0Xa3, 0Xa4, 0Xa5, 0Xa6};
+unsigned int invoke_codes[] = {0Xb6, 0Xb7, 0Xb8, 0Xb9, 0Xba};
+unsigned int static_invoke_codes[] = {0Xb8};
 
-#define number_of_immediate_codes sizeof(immediate_var0_codes)/sizeof(int)
+#define number_of_immediate_codes sizeof_int_array(immediate_var0_codes)
 
 int is_in_immediate_codes(int op, unsigned int var_codes[]) {
 
@@ -41,6 +45,37 @@ int is_in_immediate_codes(int op, unsigned int var_codes[]) {
 	}
 
 	return FALSE;
+}
+
+int is_in_instruction_set(int op, unsigned int *instruction_codes, unsigned int array_size) {
+	
+	int i = 0;
+	for (i = 0; i < array_size; ++i) {
+
+		if (op == instruction_codes[i]) return TRUE;
+	}
+
+	return FALSE;
+}
+
+int is_branch_instruction(int op) {
+
+	return is_in_instruction_set(op, branch_codes, sizeof_int_array(branch_codes));
+}
+
+int is_invoke_instruction(int op) {
+
+	return is_in_instruction_set(op, invoke_codes, sizeof_int_array(invoke_codes));
+}
+
+int is_static_invoke(int op) {
+
+	return is_in_instruction_set(op, static_invoke_codes, sizeof_int_array(static_invoke_codes));
+}
+
+int is_return_instruction(int op) {
+
+	return is_in_instruction_set(op, return_codes, sizeof_int_array(return_codes));
 }
 
 // Output an array of the verifier's type descriptors
@@ -113,16 +148,6 @@ void initialize_first_deet(method_info *m, char** initialTypeList, deet* d) {
 	d->stackHeight = 0;
 }
 
-int is_branch_instruction(int op) {
-
-	int i = 0;
-	for (i = 0; i < sizeof(branch_codes)/sizeof(int); ++i) {
-
-		if (op == branch_codes[i]) return TRUE;
-	}
-
-	return FALSE;
-}
 
 void get_next_bytecode_positions(deet* d, method_info* m, int* qs) {
 
@@ -199,6 +224,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    d->changed = FALSE;
 
 	    // p = bytecode position in this entry;
+	    int p = d->bytecodePosition;
 
 	    // h = stack height in this entry;
 	    int h = d->stackHeight;
@@ -211,7 +237,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    for (i = 0; i < h; ++i) strcpy(stack[i], d->stack[i]);
 
 	    // op = opcode at position p in byecode;
-	    unsigned int op = m->code[d->bytecodePosition];
+	    unsigned int op = m->code[p];
 
 	    // if op comtains any immediate operands then
 	    //         check that any operands which are indexes are in range;
@@ -233,7 +259,20 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			typesMatch;
 
 	    // Copy the signature for manipulation
-	    strcpy(signature, opcodes[op].signature);
+	    // Invoke instructions
+	    if (is_invoke_instruction(op)) {
+
+		    char	*retType		= NULL;
+		    int		count			= 0,
+				invokeTarget		= (m->code[p+1] << 8) | (m->code[p+2]);
+		    char	**invokeAnalysisResult	= AnalyzeInvoke(cf, invokeTarget, is_static_invoke(op), &retType, &count);
+
+		    FreeTypeDescriptor(retType);
+	    }
+	    // Regular functions:
+	    else {
+		    strcpy(signature, opcodes[op].signature);
+	     }
 
 	    // Copy the lhs characters
 	    lhsSize = strcspn(signature, ">");
@@ -270,17 +309,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    }
 
 	    // only check next position if instruction is not a return
-	    int isReturnCode = FALSE;
-	    for (i = 0; i < sizeof(return_codes)/sizeof(int); ++i) {
-		    
-		    if (op == return_codes[i]) {
-			    
-			    isReturnCode = TRUE;
-			    break;
-		    }
-	    }
-
-	    if (isReturnCode) continue;
+	    if (is_return_instruction(op)) continue;
 
 	    // for q = the bytecode position of each instruction that
 	    //         can execute immediately after op at position p do
@@ -296,7 +325,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    int	previousH		= deets[q].stackHeight,
 		        stackHeightWasSet	= (previousH >= 0);
 
-		    if (stackHeightWasSet && previousH != h) die("stack mismatch\n");
+		    if (stackHeightWasSet && previousH != h) die("stack mismatch (old: %i; new: %i; at %i)\n", previousH, h, p);
 		    // TODO check types
 
 		    // merge h and t with the entry in D, updating that entry;
