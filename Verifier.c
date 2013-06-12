@@ -264,6 +264,8 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    // set change bit to 0 in this entry;
 	    d->changed = FALSE;
 
+	    print_deet(d, m);
+
 	    // p = bytecode position in this entry;
 	    int p = d->bytecodePosition;
 
@@ -336,6 +338,9 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    // Copy the rhs characters. Also one character to one stack value.
 		    strcpy(rhs, (signature + lhsSize + 1));
 		    parse_results(rhs, results, &resultsCount);
+
+		    // TODO use the proper types from things like aload_0
+		    // that is, >A needs to be translated to something like ALjava/lang/Object
 	    }
 
 	    // foreach stack operand accessed by op do
