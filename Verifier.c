@@ -134,6 +134,7 @@ void print_deet(deet* d, method_info* m) {
 	}
 }
 
+// Deets on instructions are statically initialized to default values
 void initialize_deet(int bytecodePosition, deet* d) {
 
 	int i = 0;
@@ -148,6 +149,7 @@ void initialize_deet(int bytecodePosition, deet* d) {
 	}
 }
 
+// First deet is special case which needs to set changed flag
 void initialize_first_deet(method_info *m, char** initialTypeList, deet* d) {
 
 	int i = 0;
@@ -161,7 +163,7 @@ void initialize_first_deet(method_info *m, char** initialTypeList, deet* d) {
 	d->stackHeight = 0;
 }
 
-
+// Opcodes can branch to 1 or more possible branches
 void get_next_bytecode_positions(deet* d, method_info* m, int* qs) {
 
 	int op = m->code[d->bytecodePosition];
@@ -229,10 +231,10 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
     // controlled by the tracingExecution variable to help
     // you debug the verification algorithm.
     
-    // Sratch variables
+    // Scratch variables
     int i = 0;
 
-    // Initialize D to <0, 1, intial stack height, initial typecode list>;
+    // Initialize D to <0, 1, initial stack height, initial typecode list>;
     deet* deets = (deet*)malloc(sizeof(deet) * m->code_length);
     for (i = 0; i < m->code_length; ++i) {
 	    initialize_deet(i, deets + i);
