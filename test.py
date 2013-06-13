@@ -1,3 +1,6 @@
+# J Files with "Test" in the title are asserted to throw an error code of 1
+# These files are made to break, during the verification process.
+
 import os
 import subprocess
 
