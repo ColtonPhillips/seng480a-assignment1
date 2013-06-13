@@ -33,6 +33,7 @@ unsigned int return_codes[] = {0Xac, 0Xad, 0Xae, 0Xaf, 0Xb0, 0Xb1, 0Xb2};
 unsigned int branch_codes[] = {0X99, 0X9a, 0X9b, 0X9c, 0X9d, 0X9e, 0X9f, 0Xa0, 0Xa1, 0Xa2, 0Xa3, 0Xa4, 0Xa5, 0Xa6};
 unsigned int invoke_codes[] = {0Xb6, 0Xb7, 0Xb8, 0Xb9, 0Xba};
 unsigned int static_invoke_codes[] = {0Xb8};
+unsigned int produces_reference_codes[] = {0X2a, 0X2b, 0X2c, 0X2d}; // needs more
 char wildcard_types[][2] = {"W", "X", "Y", "Z"};
 
 #define number_of_immediate_codes sizeof_int_array(immediate_var0_codes)
@@ -78,6 +79,10 @@ int is_static_invoke(int op) {
 int is_return_instruction(int op) {
 
 	return is_in_instruction_set(op, return_codes, sizeof_int_array(return_codes));
+}
+
+int is_produces_reference_instruction(int op) {
+	return is_in_instruction_set(op, produces_reference_codes, sizeof_int_array(produces_reference_codes)); 
 }
 
 int is_wildcard_type(char* type) {
@@ -204,6 +209,25 @@ void parse_results(char* returnType, char results[MAX_NUMBER_OF_SLOTS][MAX_BUFFE
 		default:
 			// Void - copy nothing
 			*resultCount = 0;
+			break;
+	}
+}
+
+void get_reference_type(deet* d, method_info* m, char results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE]) {
+	switch (m->code[d->bytecodePosition]) {
+		case 0X2a: // aload_0
+			strcpy(results[0], d->locals[0]);
+			break;
+		case 0X2b: // aload_1
+			strcpy(results[0], d->locals[1]);
+			break;
+		case 0X2c: // aload_2
+			strcpy(results[0], d->locals[2]);
+			break;
+		case 0X2d: // aload_3
+			strcpy(results[0], d->locals[3]);
+			break;
+		default:
 			break;
 	}
 }
@@ -343,6 +367,10 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 
 		    // TODO use the proper types from things like aload_0
 		    // that is, >A needs to be translated to something like ALjava/lang/Object
+		    if (is_produces_reference_instruction(op)) {
+		    	get_reference_type(d, m, results);
+			resultsCount = 1;
+		    }
 	    }
 
 	    // foreach stack operand accessed by op do
