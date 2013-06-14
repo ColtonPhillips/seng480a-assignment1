@@ -398,8 +398,6 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    strcpy(rhs, (signature + lhsSize + 1));
 		    parse_results(rhs, results, &resultsCount);
 
-		    // TODO use the proper types from things like aload_0
-		    // that is, >A needs to be translated to something like ALjava/lang/Object
 		    if (is_produces_reference_instruction(op)) {
 		    	get_reference_type(d, m, results);
 			resultsCount = 1;
@@ -419,6 +417,9 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 
 			    if (!types_match(operands[operandIndex], stack[h]))
 				    die("type mismatch when popping stack (expected %s, got %s)\n", operands[operandIndex], stack[h]);
+
+			    // TODO check instruction results
+			    // TODO reference store instructions
 		    }
 	    }
 

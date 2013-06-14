@@ -20,11 +20,8 @@
 // heap datatype (letter A code).
 void FreeTypeDescriptor( char *s ) {
     if (s == NULL) return;
-    if (s[0] == 'A') {// we allocated storage for this descriptor
-	    printf("freeing type descriptor %s\n", s);
+    if (s[0] == 'A') // we allocated storage for this descriptor
         SafeFree(s);
-		printf("successfully freed\n", s);
-	}
     // else we used string constants for these other descriptors
     // so don't attempt to free their storage
 }
