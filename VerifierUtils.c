@@ -20,8 +20,11 @@
 // heap datatype (letter A code).
 void FreeTypeDescriptor( char *s ) {
     if (s == NULL) return;
-    if (s[0] == 'A') // we allocated storage for this descriptor
+    if (s[0] == 'A') {// we allocated storage for this descriptor
+	    printf("freeing type descriptor %s\n", s);
         SafeFree(s);
+		printf("successfully freed\n", s);
+	}
     // else we used string constants for these other descriptors
     // so don't attempt to free their storage
 }
@@ -314,7 +317,7 @@ char **AncestorTypes( char *typedescr, int *cntp ) {
 char *LUB( char *type1, char *type2 ) {
     int cnt1, cnt2, i, j;
     char **path1, **path2, *result;
-    if (type1[0] != 'A' || type2[1] != 'A')
+    if (type1[0] != 'A' || type2[0] != 'A')
         return "X";
     path1 = AncestorTypes(type1, &cnt1);
     path2 = AncestorTypes(type2, &cnt2);

@@ -232,6 +232,39 @@ void get_reference_type(deet* d, method_info* m, char results[MAX_NUMBER_OF_SLOT
 	}
 }
 
+int types_match(char* desired_type, char* supplied_type) {
+
+	switch(*desired_type) {
+
+		// Simple types
+		case 'I': case 'D': case 'd': case 'L': case 'l':
+			return !strcmp(desired_type, supplied_type);
+
+		// Reference types
+		case 'A':
+			if (*supplied_type != 'A') return FALSE;
+
+			printf("comparing reference %s to %s\n", desired_type, supplied_type);
+
+			// TODO lub
+			char	*desired_copy	= SafeStrdup(desired_type),
+				*supplied_copy	= SafeStrdup(supplied_type),
+				*lub = LUB(desired_copy, supplied_copy);
+			int matched = !strcmp(desired_type, lub);
+
+			printf("lub is %s at %p and (lub&0x7) is %i\n", lub, lub, (int)lub & 0x7);
+
+			if (strcmp(lub, "X")) {
+				
+				printf("yo, freeing lub %s\n", lub);
+				SafeFree(lub);
+			}
+			return matched;
+	}
+
+	return FALSE;
+}
+
 // Verify the bytecode of one method m from class file cf
 static void verifyMethod( ClassFile *cf, method_info *m ) {
     char *name = GetCPItemAsString(cf, m->name_index);
@@ -322,7 +355,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    // Get the lhs and rhs for the operator
 	    char	operands[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE],
 			results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE];
-	    int		typesMatch, operandCount, resultsCount;
+	    int		operandCount, resultsCount;
 
 	    // Invoke instructions:
 	    if (is_invoke_instruction(op)) {
@@ -382,12 +415,10 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		   if (h < 0) die("stack underflow\n");
 
 		    // pop stack t and check datatype compatibility of that operand;
-		    // TODO reference types?!?
 		    if (!is_wildcard_type(operands[operandIndex])) {
 
-			    // TODO: lub
-			    typesMatch = (!strcmp(operands[operandIndex], stack[h]));
-			    if (!typesMatch) die("type mismatch when popping stack (expected %s, got %s)\n", operands[operandIndex], stack[h]);
+			    if (!types_match(operands[operandIndex], stack[h]))
+				    die("type mismatch when popping stack (expected %s, got %s)\n", operands[operandIndex], stack[h]);
 		    }
 	    }
 
