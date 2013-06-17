@@ -15,78 +15,120 @@ int is_load_instruction(int op) {
 void load(deet* d, method_info* m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE], char stack[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE]) {
 
 	int	typesMatch	= TRUE,
+		localIndex	= -1,
 		op		= m->code[d->bytecodePosition];
+	char	expectedType[MAX_BUFFER_SIZE];
+
+	switch (op) {
+	case 0X1a: // "iload_0"
+	case 0X1e: // "lload_0"
+	case 0X22: // "fload_0"
+	case 0X26: // "dload_0"
+	case 0X2a: // "aload_0"
+		localIndex = 0;
+		break;
+
+	case 0X1b: // "iload_1"
+	case 0X1f: // "lload_1"
+	case 0X23: // "fload_1"
+	case 0X27: // "dload_1"
+	case 0X2b: // "aload_1"
+		localIndex = 1;
+		break;
+
+	case 0X1c: // "iload_2"
+	case 0X20: // "lload_2"
+	case 0X24: // "fload_2"
+	case 0X28: // "dload_2"
+	case 0X2c: // "aload_2"
+		localIndex = 2;
+		break;
+
+	case 0X1d: // "iload_3"
+	case 0X21: // "lload_3"
+	case 0X25: // "fload_3"
+	case 0X29: // "dload_3"
+	case 0X2d: // "aload_3"
+		localIndex = 3;
+		break;
+
+	case 0X15: // "iload", 
+	case 0X16: // "lload", 
+	case 0X17: // "fload", 
+	case 0X18: // "dload", 
+	case 0X19: // "aload", 
+		// TODO load from next byte(s)
+		die("unsupported load\n");
+		break;
+
+	case 0X2e: // "iaload",
+	case 0X2f: // "laload",
+	case 0X30: // "faload",
+	case 0X31: // "daload",
+	case 0X32: // "aaload",
+	case 0X33: // "baload",
+	case 0X34: // "caload",
+	case 0X35: // "saload",
+		// TODO who knows
+		die("unsupported load\n");
+		break;
+
+	}
 
 	switch (op) {
 	case 0X15: // "iload", 
-		break;
-	case 0X16: // "lload", 
-		break;
-	case 0X17: // "fload", 
-		break;
-	case 0X18: // "dload", 
-		break;
-	case 0X19: // "aload", 
-		break;
 	case 0X1a: // "iload_0"
-		break;
 	case 0X1b: // "iload_1"
-		break;
 	case 0X1c: // "iload_2"
-		break;
 	case 0X1d: // "iload_3"
+		strcpy(expectedType, "I");
 		break;
+
+	case 0X16: // "lload", 
 	case 0X1e: // "lload_0"
-		break;
 	case 0X1f: // "lload_1"
-		break;
 	case 0X20: // "lload_2"
-		break;
 	case 0X21: // "lload_3"
+		strcpy(expectedType, "Ll");
 		break;
+
+	case 0X17: // "fload", 
 	case 0X22: // "fload_0"
-		break;
 	case 0X23: // "fload_1"
-		typesMatch = !strcmp(locals[1], "F");
-		break;
 	case 0X24: // "fload_2"
-		break;
 	case 0X25: // "fload_3"
+		strcpy(expectedType, "F");
 		break;
+
+	case 0X18: // "dload", 
 	case 0X26: // "dload_0"
-		break;
 	case 0X27: // "dload_1"
-		break;
 	case 0X28: // "dload_2"
-		break;
 	case 0X29: // "dload_3"
+		strcpy(expectedType, "Dd");
 		break;
+
+	case 0X19: // "aload", 
 	case 0X2a: // "aload_0"
-		break;
 	case 0X2b: // "aload_1"
-		break;
 	case 0X2c: // "aload_2"
-		break;
 	case 0X2d: // "aload_3"
+		die("unsupported load instruction\n");
 		break;
+
 	case 0X2e: // "iaload",
-		break;
 	case 0X2f: // "laload",
-		break;
 	case 0X30: // "faload",
-		break;
 	case 0X31: // "daload",
-		break;
 	case 0X32: // "aaload",
-		break;
 	case 0X33: // "baload",
-		break;
 	case 0X34: // "caload",
-		break;
 	case 0X35: // "saload",
+		die("unsupported load instruction\n");
 		break;
 	}
 
+	typesMatch = (strcmp(locals[localIndex], expectedType) == 0); // TODO LUB
 	if (!typesMatch) die("type mismatch when retrieving local\n");
 }
 
