@@ -129,7 +129,7 @@ void load(deet* d, method_info* m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_S
 	}
 
 	typesMatch = (strcmp(locals[localIndex], expectedType) == 0); // TODO LUB
-	if (!typesMatch) die("type mismatch when retrieving local\n");
+	if (!typesMatch) die("type mismatch when retrieving local (expected %s, was %s)\n", expectedType, locals[localIndex]);
 }
 
 /*
