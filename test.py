@@ -10,6 +10,6 @@ for jfile in os.listdir("jvm-files"):
 
 		print("Running {0}:".format(test_name))
 		test_result = subprocess.call(["./MyJVM", "jvm-files/"+test_name])
-		if test_result is not 0:
+		if test_result is not 1:
 			print(test_name + " failed")
 		print("") # newline
