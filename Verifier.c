@@ -323,8 +323,6 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    // set change bit to 0 in this entry;
 	    d->changed = FALSE;
 
-	    print_deet(d, m);
-
 	    // p = bytecode position in this entry;
 	    int p = d->bytecodePosition;
 
