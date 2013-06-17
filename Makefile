@@ -9,17 +9,17 @@
 CSRCS =	ClassFileFormat.c ReadClassFile.c PrintClassFile.c PrintByteCode.c \
 	InterpretLoop.c jvm.c ClassResolver.c NativeClasses.c StringBuilder.c \
 	MyAlloc.c TraceOptions.c Verifier.c VerifierUtils.c OpcodeSignatures.c main.c \
-	VerifierData.c InstructionUtils.c StoreInstructions.c TypeUtils.c
+	VerifierData.c InstructionUtils.c StoreInstructions.c TypeUtils.c LoadInstructions.c
 
 HDRS =	ClassFileFormat.h ReadClassFile.h PrintClassFile.h PrintByteCode.h \
 	InterpretLoop.h jvm.h ClassResolver.h NativeClasses.h StringBuilder.h \
 	MyAlloc.h TraceOptions.h Verifier.h VerifierUtils.h OpcodeSignatures.h \
-	Utils.h VerifierData.h InstructionUtils.h StoreInstructions.h TypeUtils.h
+	Utils.h VerifierData.h InstructionUtils.h StoreInstructions.h TypeUtils.h LoadInstructions.h
 
 OBJS =	ClassFileFormat.o ReadClassFile.o PrintClassFile.o PrintByteCode.o \
 	InterpretLoop.o jvm.o ClassResolver.o NativeClasses.o StringBuilder.o \
 	MyAlloc.o TraceOptions.o Verifier.o VerifierUtils.o OpcodeSignatures.o main.o \
-	VerifierData.o StoreInstructions.o InstructionUtils.o TypeUtils.o
+	VerifierData.o StoreInstructions.o InstructionUtils.o TypeUtils.o LoadInstructions.o
 
 CFLAGS = -g -Wall               # definition for debugging
 #CFLAGS = -Wall -O2 -DNDEBUG    # definition for production version
@@ -68,7 +68,7 @@ TraceOptions.o: TraceOptions.h TraceOptions.c
 
 Verifier.o: ClassFileFormat.h OpcodeSignatures.h TraceOptions.h MyAlloc.h \
 		Verifier.h VerifierUtils.h Verifier.c \
-		InstructionUtils.h Utils.h StoreInstructions.h
+	 	InstructionUtils.h Utils.h StoreInstructions.h LoadInstructions.h
 
 VerifierUtils.o: ClassFileFormat.h ClassResolver.h OpcodeSignatures.h \
 		TraceOptions.h MyAlloc.h VerifierUtils.c
@@ -78,6 +78,8 @@ VerifierData.o: ClassFileFormat.h
 InstructionUtils.o: ClassFileFormat.h Utils.h InstructionUtils.c TypeUtils.h
 
 StoreInstructions.o: ClassFileFormat.h Utils.h VerifierData.h StoreInstructions.c
+
+LoadInstructions.o: ClassFileFormat.h Utils.h VerifierData.h LoadInstructions.c
 
 TypeUtils.o: Utils.h TypeUtils.c VerifierUtils.h MyAlloc.h
 

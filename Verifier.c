@@ -15,6 +15,7 @@
 #include "VerifierData.h"
 #include "InstructionUtils.h"
 #include "StoreInstructions.h"
+#include "LoadInstructions.h"
 #include "TypeUtils.h"
 
 unsigned int immediate_var0_codes[] = {0x1a, 0x1e, 0x22, 0x26, 0x2a, 0x3b, 0x3f, 0x43, 0x47, 0x4b};
@@ -322,10 +323,16 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    if (h > m->max_stack) die("stack overflow (%i/%i with %s)\n", h, m->max_stack, opcodes[op].opcodeName);
 	    }
 
-	    // Check the results of store instructions
+	    // Store stuff in locals
 	    if (is_store_instruction(op)) {
 
 		    store(d, m, locals);
+	    }
+
+	    // Execute (and validate) load instructions
+	    if (is_load_instruction(op)) {
+
+		    load(d, m, locals, stack);
 	    }
 
 	    // only check next position if instruction is not a return
