@@ -13,6 +13,9 @@
 #include "Verifier.h"
 #include "Utils.h"
 #include "VerifierData.h"
+#include "InstructionUtils.h"
+#include "StoreInstructions.h"
+#include "TypeUtils.h"
 
 unsigned int immediate_var0_codes[] = {0x1a, 0x1e, 0x22, 0x26, 0x2a, 0x3b, 0x3f, 0x43, 0x47, 0x4b};
 unsigned int immediate_var1_codes[] = {0x1b, 0x1f, 0x23, 0x27, 0x2b, 0x3c, 0x40, 0x44, 0x48, 0x4c};
@@ -23,7 +26,6 @@ unsigned int branch_codes[] = {0X99, 0X9a, 0X9b, 0X9c, 0X9d, 0X9e, 0X9f, 0Xa0, 0
 unsigned int invoke_codes[] = {0Xb6, 0Xb7, 0Xb8, 0Xb9, 0Xba};
 unsigned int static_invoke_codes[] = {0Xb8};
 unsigned int produces_reference_codes[] = {0X2a, 0X2b, 0X2c, 0X2d}; // needs more
-unsigned int store_codes[] = {0X36, 0X37, 0X38, 0X39, 0X3a, 0X3b, 0X3c, 0X3d, 0X3e, 0X3f, 0X40, 0X41, 0X42, 0X43, 0X44, 0X45, 0X46, 0X47, 0X48, 0X49, 0X4a, 0X4b, 0X4c, 0X4d, 0X4e, 0X4f, 0X50, 0X51, 0X52, 0X53, 0X54, 0X55, 0X56};
 char wildcard_types[][2] = {"W", "X", "Y", "Z"};
 
 #define number_of_immediate_codes sizeof_int_array(immediate_var0_codes)
@@ -35,17 +37,6 @@ int is_in_immediate_codes(int op, unsigned int var_codes[]) {
 	for (i = 0; i < number_of_immediate_codes; ++i) {
 
 		if (op == var_codes[i]) return TRUE;
-	}
-
-	return FALSE;
-}
-
-int is_in_instruction_set(int op, unsigned int *instruction_codes, unsigned int array_size) {
-	
-	int i = 0;
-	for (i = 0; i < array_size; ++i) {
-
-		if (op == instruction_codes[i]) return TRUE;
 	}
 
 	return FALSE;
@@ -85,13 +76,6 @@ int is_wildcard_type(char* type) {
 
 	return FALSE;
 }
-
-int is_store_instruction(int op) {
-
-	return is_in_instruction_set(op, store_codes, sizeof_int_array(store_codes)); 
-}
-
-
 
 // Output an array of the verifier's type descriptors
 static void printTypeCodesArray( char **vstate, method_info *m, char *name ) {
@@ -171,159 +155,7 @@ void get_reference_type(deet* d, method_info* m, char results[MAX_NUMBER_OF_SLOT
 	}
 }
 
-void coolLUB(char* type1, char* type2, char*result) {
 
-	int typesMatch;
-
-	switch(*type1) {
-
-		// Simple types
-		case 'I': case 'D': case 'd': case 'L': case 'l':
-			
-			typesMatch = (strcmp(type1, type2) == 0);
-
-			if (typesMatch) {
-
-				strcpy(result, type1);
-			}
-
-			else {
-
-				strcpy(result, "X");
-			}
-
-			break;
-
-		// Reference types
-		case 'A':
-			if (*type2 != 'A') {
-
-				strcpy(result, "X");
-			}
-
-			else {
-
-				char	*type1_copy	= SafeStrdup(type1),
-					*type2_copy	= SafeStrdup(type2),
-					*lub		= LUB(type1_copy, type2_copy);
-
-				strcpy(result, lub);
-
-				if (strcmp(lub, "X")) {
-					
-					SafeFree(lub);
-				}
-			}
-
-			break;
-
-		default:
-			strcpy(result, "X");
-	}
-}
-
-int types_match(char* desired_type, char* supplied_type) {
-
-	char result[MAX_BUFFER_SIZE];
-	coolLUB(desired_type, supplied_type, result);
-
-	return (strcmp(desired_type, result) == 0);
-}
-
-void assign_to_local(char* type, int localIndex, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE]) {
-
-	// If the type of the local is unkown, do a strict assignment
-	if (!strcmp("U", locals[localIndex])) {
-
-		strcpy(locals[localIndex], type);
-	}
-
-	// Otherwise, write the LUB (which might return X)
-	else {
-
-		char result[MAX_BUFFER_SIZE];
-		coolLUB(type, locals[localIndex], result);
-		strcpy(locals[localIndex], result);
-	}
-}
-
-void store(deet* d, method_info *m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE]) {
-
-	int op = m->code[d->bytecodePosition];
-
-	switch (op) {
-	case 0X36: // "istore",  
-		break;
-	case 0X37: // "lstore",  
-		break;
-	case 0X38: // "fstore",  
-		break;
-	case 0X39: // "dstore",  
-		break;
-	case 0X3a: // "astore",  
-		break;
-	case 0X3b: // "istore_0",
-		assign_to_local("I", 0, locals);
-		break;
-	case 0X3c: // "istore_1",
-		assign_to_local("I", 1, locals);
-		break;
-	case 0X3d: // "istore_2",
-		assign_to_local("I", 2, locals);
-		break;
-	case 0X3e: // "istore_3",
-		assign_to_local("I", 3, locals);
-		break;
-	case 0X3f: // "lstore_0",
-		break;
-	case 0X40: // "lstore_1",
-		break;
-	case 0X41: // "lstore_2",
-		break;
-	case 0X42: // "lstore_3",
-		break;
-	case 0X43: // "fstore_0",
-		break;
-	case 0X44: // "fstore_1",
-		break;
-	case 0X45: // "fstore_2",
-		break;
-	case 0X46: // "fstore_3",
-		break;
-	case 0X47: // "dstore_0",
-		break;
-	case 0X48: // "dstore_1",
-		break;
-	case 0X49: // "dstore_2",
-		break;
-	case 0X4a: // "dstore_3",
-		break;
-	case 0X4b: // "astore_0",
-		break;
-	case 0X4c: // "astore_1",
-		break;
-	case 0X4d: // "astore_2",
-		break;
-	case 0X4e: // "astore_3",
-		break;
-	case 0X4f: // "iastore", 
-		break;
-	case 0X50: // "lastore", 
-		break;
-	case 0X51: // "fastore", 
-		break;
-	case 0X52: // "dastore", 
-		break;
-	case 0X53: // "aastore", 
-		break;
-	case 0X54: // "bastore", 
-		break;
-	case 0X55: // "castore", 
-		break;
-	case 0X56: // "sastore", 
-		break;
-	}
-}
 
 // Verify the bytecode of one method m from class file cf
 static void verifyMethod( ClassFile *cf, method_info *m ) {
@@ -476,9 +308,6 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 
 			    if (!types_match(operands[operandIndex], stack[h]))
 				    die("type mismatch when popping stack (expected %s, got %s)\n", operands[operandIndex], stack[h]);
-
-			    // TODO check instruction results
-			    // TODO reference store instructions
 		    }
 	    }
 
