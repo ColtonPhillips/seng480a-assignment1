@@ -11,19 +11,8 @@
 #include "MyAlloc.h"
 #include "VerifierUtils.h"
 #include "Verifier.h"
-
-#define die(...) do { printf(__VA_ARGS__); fflush(stdout); exit(1); } while (0)
-
-#define got_here printf("got here %d\n", __LINE__);
-
-#define MAX_NUMBER_OF_SLOTS 20
-#define MAX_BUFFER_SIZE 200
-
-#define TRUE 1
-#define FALSE 0 
-
-#define sizeof_array(x,type) sizeof(x)/sizeof(type)
-#define sizeof_int_array(x) sizeof_array(x,int)
+#include "Utils.h"
+#include "VerifierData.h"
 
 unsigned int immediate_var0_codes[] = {0x1a, 0x1e, 0x22, 0x26, 0x2a, 0x3b, 0x3f, 0x43, 0x47, 0x4b};
 unsigned int immediate_var1_codes[] = {0x1b, 0x1f, 0x23, 0x27, 0x2b, 0x3c, 0x40, 0x44, 0x48, 0x4c};
@@ -116,64 +105,6 @@ static void printTypeCodesArray( char **vstate, method_info *m, char *name ) {
     }
     for( i = 0;  i < m->max_stack; i++ )
         fprintf(stdout, "  S%d:  %s\n", i, *vstate++);
-}
-
-typedef struct {
-	int	bytecodePosition;
-	int	changed;
-	int	stackHeight;
-	char	locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE];
-	char	stack[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE];
-} deet;
-
-void print_deet(deet* d, method_info* m) {
-
-	int i = 0;
-
-	printf("[%s | %lu] position: %i, changed: %i, stack height: %i\n",
-			opcodes[m->code[d->bytecodePosition]].opcodeName,
-			(unsigned long)d,
-			d->bytecodePosition,
-			d->changed,
-			d->stackHeight);
-
-	printf("\tlocals:\n");
-	for (i = 0; i < m->max_locals; ++i) {
-		printf("\t\t%i:	%s\n", i, d->locals[i]);
-	}
-	printf("\tstack:\n");
-	for (i = 0; i < d->stackHeight; ++i) {
-		printf("\t\t%i:	%s\n", i, d->stack[i]);
-	}
-}
-
-// Deets on instructions are statically initialized to default values
-void initialize_deet(int bytecodePosition, deet* d) {
-
-	int i = 0;
-
-	d->bytecodePosition = bytecodePosition;
-	d->changed = FALSE;
-	d->stackHeight = -1;
-
-	for (i = 0; i < MAX_NUMBER_OF_SLOTS; ++i) {
-		strcpy(d->locals[i], "U");
-		strcpy(d->stack[i], "-");
-	}
-}
-
-// First deet is special case which needs to set changed flag
-void initialize_first_deet(method_info *m, char** initialTypeList, deet* d) {
-
-	int i = 0;
-
-	for (i = 0; i < m->max_locals; ++i) {
-
-		strcpy(d->locals[i], initialTypeList[i]);
-	}
-
-	d->changed = TRUE;
-	d->stackHeight = 0;
 }
 
 // Opcodes can branch to 1 or more possible branches

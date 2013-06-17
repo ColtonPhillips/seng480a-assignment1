@@ -8,15 +8,18 @@
 
 CSRCS =	ClassFileFormat.c ReadClassFile.c PrintClassFile.c PrintByteCode.c \
 	InterpretLoop.c jvm.c ClassResolver.c NativeClasses.c StringBuilder.c \
-	MyAlloc.c TraceOptions.c Verifier.c VerifierUtils.c OpcodeSignatures.c main.c
+	MyAlloc.c TraceOptions.c Verifier.c VerifierUtils.c OpcodeSignatures.c main.c \
+	VerifierData.c
 
 HDRS =	ClassFileFormat.h ReadClassFile.h PrintClassFile.h PrintByteCode.h \
 	InterpretLoop.h jvm.h ClassResolver.h NativeClasses.h StringBuilder.h \
-	MyAlloc.h TraceOptions.h Verifier.h VerifierUtils.h OpcodeSignatures.h
+	MyAlloc.h TraceOptions.h Verifier.h VerifierUtils.h OpcodeSignatures.h \
+	Utils.h VerifierData.h
 
 OBJS =	ClassFileFormat.o ReadClassFile.o PrintClassFile.o PrintByteCode.o \
 	InterpretLoop.o jvm.o ClassResolver.o NativeClasses.o StringBuilder.o \
-	MyAlloc.o TraceOptions.o Verifier.o VerifierUtils.o OpcodeSignatures.o main.o
+	MyAlloc.o TraceOptions.o Verifier.o VerifierUtils.o OpcodeSignatures.o main.o \
+	VerifierData.o
 
 CFLAGS = -g -Wall               # definition for debugging
 #CFLAGS = -Wall -O2 -DNDEBUG    # definition for production version
@@ -68,6 +71,8 @@ Verifier.o: ClassFileFormat.h OpcodeSignatures.h TraceOptions.h MyAlloc.h \
 
 VerifierUtils.o: ClassFileFormat.h ClassResolver.h OpcodeSignatures.h \
 		TraceOptions.h MyAlloc.h VerifierUtils.c
+
+VerifierData.o: ClassFileFormat.h
 
 OpcodeSignatures.o: OpcodeSignatures.h OpcodeSignatures.c
 
