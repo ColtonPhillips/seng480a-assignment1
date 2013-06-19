@@ -250,6 +250,12 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE];
 	    int		operandCount, resultsCount;
 
+	    // TODO I think we should put all out special cases in this if-else block
+	    // 		e.g.,
+	    // 			if (is_invoke_instruction(op)) {...}
+	    // 			else if (is_load_instruction(op)) {...}
+	    // 			else {...}
+	    // TODO We need to handle a bunch of special cases, probably. lcd, for example.
 	    // Invoke instructions:
 	    if (is_invoke_instruction(op)) {
 
