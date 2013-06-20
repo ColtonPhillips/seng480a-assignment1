@@ -216,7 +216,6 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    // set change bit to 0 in this entry;
 	    d->changed = FALSE;
 	    print_deet(d, m);
-	    //print_deet(d, m);
 
 	    // p = bytecode position in this entry;
 	    int p = d->bytecodePosition;
@@ -272,6 +271,12 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    // Parse results
 		    parse_results(retType, results, &resultsCount);
 		    FreeTypeDescriptor(retType);
+	    }
+
+	    // Execute (and validate) load instructions
+	    else if (is_load_instruction(op)) {
+
+		    load(d, m, locals, stack, operands, &operandCount, results, &resultsCount);
 	    }
 
 	    // Regular instructions:
@@ -336,11 +341,6 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    store(d, m, locals);
 	    }
 
-	    // Execute (and validate) load instructions
-	    if (is_load_instruction(op)) {
-
-		    load(d, m, locals, stack);
-	    }
 
 	    // only check next position if instruction is not a return
 	    if (is_return_instruction(op)) continue;

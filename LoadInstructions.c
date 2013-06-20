@@ -13,11 +13,20 @@ int is_load_instruction(int op) {
 	return is_in_instruction_set(op, load_codes, sizeof_int_array(load_codes)); 
 }
 
-void load(deet* d, method_info* m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE], char stack[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE]) {
+void load(
+		deet* d, method_info* m,
+		char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE],
+		char stack[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE],
+		char operands[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE],
+		int* operandCount,
+		char results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE],
+		int* resultsCount) {
 
 	int	localIndex	= -1,
 		op		= m->code[d->bytecodePosition];
 	char	expectedType[MAX_BUFFER_SIZE];
+
+	*operandCount = 0;
 
 	switch (op) {
 	case 0X1a: // "iload_0"
@@ -82,6 +91,8 @@ void load(deet* d, method_info* m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_S
 	case 0X1c: // "iload_2"
 	case 0X1d: // "iload_3"
 		strcpy(expectedType, "I");
+		*resultsCount = 1;
+		strcpy(results[0], "I");
 		break;
 
 	case 0X16: // "lload", 
@@ -90,6 +101,9 @@ void load(deet* d, method_info* m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_S
 	case 0X20: // "lload_2"
 	case 0X21: // "lload_3"
 		strcpy(expectedType, "Ll");
+		*resultsCount = 2;
+		strcpy(results[0], "L");
+		strcpy(results[1], "l");
 		break;
 
 	case 0X17: // "fload", 
@@ -98,6 +112,8 @@ void load(deet* d, method_info* m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_S
 	case 0X24: // "fload_2"
 	case 0X25: // "fload_3"
 		strcpy(expectedType, "F");
+		*resultsCount = 1;
+		strcpy(results[0], "F");
 		break;
 
 	case 0X18: // "dload", 
@@ -106,6 +122,10 @@ void load(deet* d, method_info* m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_S
 	case 0X28: // "dload_2"
 	case 0X29: // "dload_3"
 		strcpy(expectedType, "Dd");
+		*resultsCount = 2;
+		strcpy(results[0], "D");
+		strcpy(results[1], "d");
+
 		break;
 
 	case 0X19: // "aload", 
@@ -114,6 +134,8 @@ void load(deet* d, method_info* m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_S
 	case 0X2c: // "aload_2"
 	case 0X2d: // "aload_3"
 		strcpy(expectedType, "ALjava/lang/Object");
+		*resultsCount = 1;
+		strcpy(results[0], locals[localIndex]);
 		break;
 
 	case 0X2e: // "iaload",
