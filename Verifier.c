@@ -336,6 +336,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    }
 
 	    // Store stuff in locals
+	    // TODO do we need to move store?
 	    if (is_store_instruction(op)) {
 
 		    store(d, m, locals);
