@@ -8,9 +8,8 @@ void print_deet(deet* d, method_info* m) {
 
 	int i = 0;
 
-	printf("[%s | %lu] position: %i, changed: %i, stack height: %i\n",
+	printf("[%s] position: %i, changed: %i, stack height: %i\n",
 			opcodes[m->code[d->bytecodePosition]].opcodeName,
-			(unsigned long)d,
 			d->bytecodePosition,
 			d->changed,
 			d->stackHeight);
