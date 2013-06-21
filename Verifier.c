@@ -284,13 +284,22 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		}
 
 		// getstatic >X
-		// TODO putstatic, putfield, getfield
+		// TODO poutfield, gutfield
 		else if (op == 0Xb2) {
 
 			operandCount = 0;
 
 			int index = nextBytecode_ii(d, m);
 			parse_results(FieldTypeCode(cf, index), results, &resultsCount);
+		}
+
+		// putstatic
+		else if (op == 0Xb3) {
+
+			resultsCount = 0;
+
+			int index = nextBytecode_ii(d, m);
+			parse_results(FieldTypeCode(cf, index), operands, &operandCount);
 		}
 
 		// ldc
