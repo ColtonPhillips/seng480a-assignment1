@@ -67,6 +67,28 @@ int types_match(char* desired_type, char* supplied_type) {
 	return (strcmp(desired_type, result) == 0);
 }
 
+void get_primitive_type(int type, char result[MAX_BUFFER_SIZE]) {
+
+	switch(type) {
+	case 8:   // byte
+	case 5:   // char
+	case 4:   // boolean
+	case 9:   // short
+	case 10:   // int
+		strcpy(result, "I");
+		break;
+	case 11:   // long
+		strcpy(result, "Ll");
+		break;
+	case 6:   // float
+		strcpy(result, "F");
+		break;
+	case 7:   // double
+		strcpy(result, "Dd");
+		break;
+	}
+}
+
 void get_cpitem_type(ClassFile* cf, int ix, char result[MAX_BUFFER_SIZE]) {
 
 	if (ix <= 0 || ix > cf->constant_pool_count)

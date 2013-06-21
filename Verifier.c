@@ -217,9 +217,9 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		if (indexOfChangedDeet < 0) break; // No changed deet - we're done!
 		deet* d = (deets + indexOfChangedDeet);
 
-			// set change bit to 0 in this entry;
-			d->changed = FALSE;
-		//print_deet(d, m);
+		// set change bit to 0 in this entry;
+		d->changed = FALSE;
+		print_deet(d, m);
 
 		// p = bytecode position in this entry;
 		int p = d->bytecodePosition;
@@ -306,7 +306,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		}
 
 		// new
-		// TODO newarray, anewarray
+		// TODO anewarray
 		else if (op == 0Xbb) {
 
 			operandCount = 0;
@@ -315,6 +315,20 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			char *typeCode = GetCPItemAsString(cf, nextBytecode_ii(d, m));
 			sprintf(results[0], "AL%s", typeCode);
 			if (typeCode) SafeFree(typeCode);
+		}
+
+		// newarray
+		else if (op == 0Xbc) {
+
+			operandCount = 1;
+			resultsCount = 1;
+
+			strcpy(operands[0], "I");
+
+			int type = nextBytecode_i(d, m);
+			char typeCode[MAX_BUFFER_SIZE];
+			get_primitive_type(type, typeCode);
+			sprintf(results[0], "A[%s", typeCode);
 		}
 
 		// dup
@@ -403,7 +417,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 				lhsSize = strcspn(signature, ">");
 				strncpy(lhs, signature, lhsSize);
 				for (i = 0; i < lhsSize; ++i) {
-					sprintf(operands[i], "%c", lhs[0]);
+					sprintf(operands[i], "%c", lhs[i]);
 				}
 				operandCount = lhsSize;
 
@@ -425,7 +439,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			if (strcmp(operands[i], "*")) { // TODO is * what we want for the wildcard type?
 
 				if (!types_match(operands[i], stack[h]))
-					die("type mismatch when popping stack (expected %s, got %s)\n", operands[i], stack[h]);
+					die("type mismatch when popping stack (expected %s, got %s, h is %i)\n", operands[i], stack[h], h);
 			}
 		}
 
