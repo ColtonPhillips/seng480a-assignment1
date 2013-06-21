@@ -25,6 +25,7 @@ unsigned int immediate_var3_codes[] = {0x1d, 0x21, 0x25, 0x29, 0x2d, 0x3e, 0x42,
 unsigned int return_codes[] = {0Xac, 0Xad, 0Xae, 0Xaf, 0Xb0, 0Xb1};
 unsigned int branch_codes[] = {0X99, 0X9a, 0X9b, 0X9c, 0X9d, 0X9e, 0X9f, 0Xa0, 0Xa1, 0Xa2, 0Xa3, 0Xa4, 0Xa5, 0Xa6, 0xc6, 0xc7};
 unsigned int invoke_codes[] = {0Xb6, 0Xb7, 0Xb8, 0Xb9, 0Xba};
+unsigned int jump_codes[] = {0Xa7};
 unsigned int static_invoke_codes[] = {0Xb8};
 unsigned int produces_reference_codes[] = {0X2a, 0X2b, 0X2c, 0X2d}; // needs more
 
@@ -66,6 +67,10 @@ int is_produces_reference_instruction(int op) {
 	return is_in_instruction_set(op, produces_reference_codes, sizeof_int_array(produces_reference_codes)); 
 }
 
+int is_jump_instruction(int op) {
+	return is_in_instruction_set(op, jump_codes, sizeof_int_array(jump_codes)); 
+}
+
 // Output an array of the verifier's type descriptors
 static void printTypeCodesArray( char **vstate, method_info *m, char *name ) {
 	int i;
@@ -86,20 +91,33 @@ void get_next_bytecode_positions(deet* d, method_info* m, int* qs) {
 	int op = m->code[d->bytecodePosition];
 
 	// Return statements have no next instructions
-	if (is_return_instruction(op)) return;
+	if (is_return_instruction(op)) {
 
-	// The immediate next instruction
-	int numberOfAdditionalBytes = strlen(opcodes[op].inlineOperands);
-	qs[0] = d->bytecodePosition + numberOfAdditionalBytes + 1;
+		// Do nothing
+	}
 
-	// Branch instructions
-	if (is_branch_instruction(op)) {
+	// Jump instructions go to some well defined next place
+	else if (is_jump_instruction(op)) {
+
 		int offset = (m->code[d->bytecodePosition + 1] << 8) | (m->code[d->bytecodePosition + 2]);
-		qs[1] = d->bytecodePosition + offset;
+		qs[0] = d->bytecodePosition + offset;
+	}	
+
+	else {
+
+		// The immediate next instruction
+		int numberOfAdditionalBytes = strlen(opcodes[op].inlineOperands);
+		qs[0] = d->bytecodePosition + numberOfAdditionalBytes + 1;
+
+		// Branch instructions
+		if (is_branch_instruction(op)) {
+			int offset = (m->code[d->bytecodePosition + 1] << 8) | (m->code[d->bytecodePosition + 2]);
+			qs[1] = d->bytecodePosition + offset;
+		}
 	}
 }
 
-void parse_type(char* returnType, char results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE], int* resultCount) {
+void parse_results(char* returnType, char results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE], int* resultCount) {
 
 	switch (*returnType) {
 		case 'I':
@@ -199,8 +217,8 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		if (indexOfChangedDeet < 0) break; // No changed deet - we're done!
 		deet* d = (deets + indexOfChangedDeet);
 
-		// set change bit to 0 in this entry;
-		d->changed = FALSE;
+			// set change bit to 0 in this entry;
+			d->changed = FALSE;
 		//print_deet(d, m);
 
 		// p = bytecode position in this entry;
@@ -249,7 +267,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			}
 
 			// Parse results
-			parse_type(retType, results, &resultsCount);
+			parse_results(retType, results, &resultsCount);
 			FreeTypeDescriptor(retType);
 		}
 
@@ -266,27 +284,17 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		}
 
 		// getstatic >X
-		// TODO poutfield, gutfield
+		// TODO putstatic, putfield, getfield
 		else if (op == 0Xb2) {
 
 			operandCount = 0;
 
 			int index = nextBytecode_ii(d, m);
-			parse_type(FieldTypeCode(cf, index), results, &resultsCount);
+			parse_results(FieldTypeCode(cf, index), results, &resultsCount);
 		}
-
-		// putstatic
-		else if (op == 0Xb3) {
-
-			resultsCount = 0;
-
-			int index = nextBytecode_ii(d, m);
-			parse_type(FieldTypeCode(cf, index), operands, &operandCount);
-		}
-
 
 		// ldc
-		// TODO ldc2_w
+		// TODO ldc_w, ldc2_w
 		else if (op == 0x12) {
 
 			operandCount = 0;
@@ -294,16 +302,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			int index = nextBytecode_i(d, m);
 			char typeCode[MAX_BUFFER_SIZE];
 			get_cpitem_type(cf, index, typeCode);
-			parse_type(typeCode, results, &resultsCount);
-		}
-
- 		// ldw_w 
-		else if (op == 0X13) {
-			operandCount = 0;
-
-			char typeCode[MAX_BUFFER_SIZE];
-			get_cpitem_type(cf, nextBytecode_ii(d, m), typeCode);
-			parse_type(typeCode, results, &resultsCount);
+			parse_results(typeCode, results, &resultsCount);
 		}
 
 		// new
@@ -390,20 +389,29 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			// Copy the signature for manipulation
 			strcpy(signature, opcodes[op].signature);
 
-			// Copy the lhs characters
-			// Since we're reading these from the opcodes, each stack value should be one character (reference is just an A)
-			// TODO think about instructions which take *any* reference type (arraylength, instanceof, checkcast, monitor*, ifnull, ifnonnull)
-			lhsSize = strcspn(signature, ">");
-			strncpy(lhs, signature, lhsSize);
-			for (i = 0; i < lhsSize; ++i) {
-				sprintf(operands[i], "%c", lhs[0]);
-			}
-			operandCount = lhsSize;
+			// Some signatures have no lhs/rhs division (e.g., goto)
+			if (!strcmp(signature, "")) {
 
-			// Copy the rhs characters. Also one character to one stack value.
-			// TODO think about instructions which produce *any* reference type
-			strcpy(rhs, (signature + lhsSize + 1));
-			parse_type(rhs, results, &resultsCount);
+				operandCount = 0;
+				resultsCount = 0;
+			}
+
+			else {
+				// Copy the lhs characters
+				// Since we're reading these from the opcodes, each stack value should be one character (reference is just an A)
+				// TODO think about instructions which take *any* reference type (arraylength, instanceof, checkcast, monitor*, ifnull, ifnonnull)
+				lhsSize = strcspn(signature, ">");
+				strncpy(lhs, signature, lhsSize);
+				for (i = 0; i < lhsSize; ++i) {
+					sprintf(operands[i], "%c", lhs[0]);
+				}
+				operandCount = lhsSize;
+
+				// Copy the rhs characters. Also one character to one stack value.
+				// TODO think about instructions which produce *any* reference type
+				strcpy(rhs, (signature + lhsSize + 1));
+				parse_results(rhs, results, &resultsCount);
+			}
 		}
 
 		// foreach stack operand accessed by op do
@@ -441,17 +449,27 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			q = qs[qIndex];
 			if (q < 0) break;
 
+
+			/*printf("going from %s to %s\n",
+			  opcodes[m->code[deets[p].bytecodePosition]].opcodeName,
+			  opcodes[m->code[deets[q].bytecodePosition]].opcodeName);*/
+
 			// if any incompatibilities were found then
 			//         report an error;
 			int	previousH		= deets[q].stackHeight,
 				stackHeightWasSet	= (previousH >= 0);
 
-			if (stackHeightWasSet && previousH != h) die("stack mismatch (old: %i; new: %i; at %i)\n", previousH, h, p);
+			if (stackHeightWasSet && previousH != h) {
 
+
+				printf("mismatch on deet!\n");
+				print_deet(&deets[q], m);
+				die("stack mismatch (old: %i; new: %i; at %i)\n", previousH, h, q);
+			}
 
 			char result[MAX_BUFFER_SIZE];
-			if (strcmp(deets[q].locals[i],"U")) { // local is defined
-				for (i = 0;i < m->max_locals; ++i) {
+			for (i = 0;i < m->max_locals; ++i) {
+				if (strcmp(deets[q].locals[i],"U")) { // local is defined
 					coolLUB(locals[i], deets[q].locals[i], result);
 
 					if (!strcmp(result,"X")) die("locals mismatch on merge: local:%s; deet.local:%s\n", locals[i], deets[q].locals[i]);
@@ -461,14 +479,14 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 						strcpy(deets[q].locals[i], result);
 					}
 				}
-			}
-			else {
-				strcpy(deets[q].locals[i], locals[i]);
-				deets[q].changed = TRUE;
+				else {
+					strcpy(deets[q].locals[i], locals[i]);
+					deets[q].changed = TRUE;
+				}
 			}
 
-			if (strcmp(deets[q].stack[i],"-")) { // stack is defined
-				for (i = 0; i < h; ++i) {
+			for (i = 0; i < h; ++i) {
+				if (strcmp(deets[q].stack[i],"-")) { // stack is defined
 					coolLUB(stack[i], deets[q].stack[i], result);
 
 					if (!strcmp(result, "X")) die("stack mismatch on merge: stack:%s; deet.stack:%s\n", stack[i], deets[q].stack[i]);
@@ -478,15 +496,15 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 						strcpy(deets[q].stack[i], result);
 					}
 				}
-			}
-			else {
-				deets[q].changed = TRUE;
-				strcpy(deets[q].stack[i], result);
+				else {
+					deets[q].changed = TRUE;
+					strcpy(deets[q].stack[i], stack[i]);
+				}
 			}
 
 			// merge h and t with the entry in D, updating that entry;
 			deets[q].stackHeight = h;
-			
+
 			for (i = 0; i < m->max_locals; ++i)	strcpy(deets[q].locals[i], locals[i]);
 			for (i = 0; i < h; ++i)		strcpy(deets[q].stack[i], stack[i]);
 
