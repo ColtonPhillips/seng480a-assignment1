@@ -157,6 +157,7 @@ int nextBytecode_ii(deet* d, method_info* m) {
 
 // Verify the bytecode of one method m from class file cf
 static void verifyMethod( ClassFile *cf, method_info *m ) {
+	printf("\n\nstarting method verification\n");
     char *name = GetCPItemAsString(cf, m->name_index);
     char *retType;
     int numSlots = m->max_locals + m->max_stack;
@@ -270,6 +271,14 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    load(d, m, locals, stack, operands, &operandCount, results, &resultsCount);
 	    }
 
+	    // Store
+	    else if (is_store_instruction(op)) {
+
+		    store(d, m, locals, stack, h, operands, &operandCount, results, &resultsCount);
+	    }
+
+	    // TODO handle returns better
+
 	    // getstatic >X
 	    // TODO putstatic, putfield, getfield
 	    else if (op == 0Xb2) {
@@ -297,7 +306,23 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 
 		    operandCount = 0;
 		    resultsCount = 1;
-		    sprintf(results[0], "AL%s", GetCPItemAsString(cf, nextBytecode_ii(d, m)));
+
+		    char *typeCode = GetCPItemAsString(cf, nextBytecode_ii(d, m));
+		    sprintf(results[0], "AL%s", typeCode);
+		    if (typeCode) SafeFree(typeCode);
+	    }
+
+	    // dup
+	    else if (op == 0X59) {
+
+		    operandCount = 1;
+		    resultsCount = 2;
+
+		    if (h <= 0) die("no stack to duplicate\n");
+
+		    strcpy(operands[0], stack[h-1]);
+		    strcpy(results[0], stack[h-1]);
+		    strcpy(results[1], stack[h-1]);
 	    }
 
 	    // Regular instructions:
@@ -352,17 +377,8 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    if (h > m->max_stack) die("stack overflow (%i/%i with %s)\n", h, m->max_stack, opcodes[op].opcodeName);
 	    }
 
-	    // Store stuff in locals
-	    // TODO do we need to move store?
-	    if (is_store_instruction(op)) {
-
-		    store(d, m, locals);
-	    }
-
-
 	    // only check next position if instruction is not a return
 	    if (is_return_instruction(op)) continue;
-
 
 	    // for q = the bytecode position of each instruction that
 	    //         can execute immediately after op at position p do

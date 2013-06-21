@@ -11,11 +11,20 @@ int is_store_instruction(int op) {
 	return is_in_instruction_set(op, store_codes, sizeof_int_array(store_codes)); 
 }
 
-void store(deet* d, method_info *m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE]) {
+void store(
+		deet* d, method_info* m,
+		char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE],
+		char stack[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE],
+		int stackHeight,
+		char operands[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE],
+		int* operandCount,
+		char results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE],
+		int* resultsCount) {
+
+	*resultsCount = 0;
 
 	int	op		= m->code[d->bytecodePosition],
 	    	localIndex	= -1;
-	char	storedType[MAX_BUFFER_SIZE];
 
 	switch (op) {
 	case 0X36: // "istore",  
@@ -77,7 +86,9 @@ void store(deet* d, method_info *m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_
 	case 0X3c: // "istore_1",
 	case 0X3d: // "istore_2",
 	case 0X3e: // "istore_3",
-		strcpy(storedType, "I");
+		strcpy(locals[localIndex], "I");
+		*operandCount = 1;
+		strcpy(operands[0], "I");
 		break;
 
 	case 0X37: // "lstore",  
@@ -85,7 +96,10 @@ void store(deet* d, method_info *m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_
 	case 0X40: // "lstore_1",
 	case 0X41: // "lstore_2",
 	case 0X42: // "lstore_3",
-		strcpy(storedType, "Ll");
+		strcpy(locals[localIndex], "Ll");
+		*operandCount = 2;
+		strcpy(operands[0], "L");
+		strcpy(operands[1], "l");
 		break;
 
 	case 0X38: // "fstore",  
@@ -93,7 +107,9 @@ void store(deet* d, method_info *m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_
 	case 0X44: // "fstore_1",
 	case 0X45: // "fstore_2",
 	case 0X46: // "fstore_3",
-		strcpy(storedType, "f");
+		strcpy(locals[localIndex], "F");
+		*operandCount = 1;
+		strcpy(operands[0], "F");
 		break;
 
 	case 0X39: // "dstore",  
@@ -101,7 +117,10 @@ void store(deet* d, method_info *m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_
 	case 0X48: // "dstore_1",
 	case 0X49: // "dstore_2",
 	case 0X4a: // "dstore_3",
-		strcpy(storedType, "Dd");
+		strcpy(locals[localIndex], "Dd");
+		*operandCount = 2;
+		strcpy(operands[0], "D");
+		strcpy(operands[1], "d");
 		break;
 
 	case 0X3a: // "astore",  
@@ -109,8 +128,10 @@ void store(deet* d, method_info *m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_
 	case 0X4c: // "astore_1",
 	case 0X4d: // "astore_2",
 	case 0X4e: // "astore_3",
-		// TODO store w/ reference
-		die("unsupported store instruction\n");
+		if (stackHeight <= 0) die("No reference to store");
+		*operandCount = 1;
+		strcpy(locals[localIndex], stack[stackHeight - 1]);
+		strcpy(operands[0], "ALjava/lang/Object");
 		break;
 
 	case 0X4f: // "iastore", 
@@ -124,6 +145,4 @@ void store(deet* d, method_info *m, char locals[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_
 		die("unsupported store instruction\n");
 		break;
 	}
-
-	assign_to_local(storedType, localIndex, locals);
 }
