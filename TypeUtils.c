@@ -1,3 +1,5 @@
+// Colton Phillips
+// Tom Gibson
 #include "TypeUtils.h"
 #include <string.h>
 #include <stdio.h>
