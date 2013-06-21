@@ -99,7 +99,7 @@ void get_next_bytecode_positions(deet* d, method_info* m, int* qs) {
 	}
 }
 
-void parse_results(char* returnType, char results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE], int* resultCount) {
+void parse_type(char* returnType, char results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE], int* resultCount) {
 
 	switch (*returnType) {
 		case 'I':
@@ -249,7 +249,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			}
 
 			// Parse results
-			parse_results(retType, results, &resultsCount);
+			parse_type(retType, results, &resultsCount);
 			FreeTypeDescriptor(retType);
 		}
 
@@ -266,17 +266,27 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		}
 
 		// getstatic >X
-		// TODO putstatic, putfield, getfield
+		// TODO poutfield, gutfield
 		else if (op == 0Xb2) {
 
 			operandCount = 0;
 
 			int index = nextBytecode_ii(d, m);
-			parse_results(FieldTypeCode(cf, index), results, &resultsCount);
+			parse_type(FieldTypeCode(cf, index), results, &resultsCount);
 		}
 
+		// putstatic
+		else if (op == 0Xb3) {
+
+			resultsCount = 0;
+
+			int index = nextBytecode_ii(d, m);
+			parse_type(FieldTypeCode(cf, index), operands, &operandCount);
+		}
+
+
 		// ldc
-		// TODO ldc_w, ldc2_w
+		// TODO ldc2_w
 		else if (op == 0x12) {
 
 			operandCount = 0;
@@ -284,7 +294,16 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			int index = nextBytecode_i(d, m);
 			char typeCode[MAX_BUFFER_SIZE];
 			get_cpitem_type(cf, index, typeCode);
-			parse_results(typeCode, results, &resultsCount);
+			parse_type(typeCode, results, &resultsCount);
+		}
+
+ 		// ldw_w 
+		else if (op == 0X13) {
+			operandCount = 0;
+
+			char typeCode[MAX_BUFFER_SIZE];
+			get_cpitem_type(cf, nextBytecode_ii(d, m), typeCode);
+			parse_type(typeCode, results, &resultsCount);
 		}
 
 		// new
@@ -384,7 +403,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 			// Copy the rhs characters. Also one character to one stack value.
 			// TODO think about instructions which produce *any* reference type
 			strcpy(rhs, (signature + lhsSize + 1));
-			parse_results(rhs, results, &resultsCount);
+			parse_type(rhs, results, &resultsCount);
 		}
 
 		// foreach stack operand accessed by op do
