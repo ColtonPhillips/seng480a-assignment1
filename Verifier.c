@@ -305,30 +305,23 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 
 
 		// gutfield A>X
-//		else if (op == 0Xb4) {
-//{ 0Xb4, "getfield",     "ii", "A>X" },  /* get a field value of an object objectref, where the field is identified by field reference in the constant pool index (index1 << 8 + index2) */
-//			operandCount = 0;
-//			resultsCount = 1;
-//
-//			int index = nextBytecode_ii(d, m);
-//			
-//
-//			char *typeCode = GetCPItemAsString(cf, nextBytecode_ii(d, m));
-//			sprintf(results[0], "AL%s", typeCode);
-//			if (typeCode) SafeFree(typeCode);
-//
-//		if (stackHeight <= 0) die("No reference to store");
-//		*operandCount = 1;
-//		strcpy(locals[localIndex], stack[stackHeight - 1]);
-//		strcpy(operands[0], "ALjava/lang/Object");
-//	
-//		}
-//
-//		// poutfield
-//		else if (op == 0Xb5) {
-//
-//{ 0Xb5, "putfield",     "ii", "AX>" },  /* set field to value in an object objectref, where the field is identified by a field reference index in constant pool (i1 << 8 + i2) */
-//		}
+		else if (op == 0Xb4) {
+			operandCount = 1;
+			resultsCount = 1;
+
+			int index = nextBytecode_ii(d, m);
+			parse_results(FieldTypeCode(cf, index), results, &resultsCount);
+		}
+
+		// poutfield
+		else if (op == 0Xb5) {
+			resultsCount = 0;
+
+			int index = nextBytecode_ii(d, m);
+			parse_results(FieldTypeCode(cf, index), operands+1, &operandCount);
+			operandCount++;
+			strcpy(operands[0], "ALjava/lang/Object");
+		}
  	
 		// ldc
 		// TODO ldc_w, ldc2_w
