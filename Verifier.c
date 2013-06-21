@@ -106,6 +106,10 @@ void parse_results(char* returnType, char results[MAX_NUMBER_OF_SLOTS][MAX_BUFFE
 			strcpy(results[0], "I");
 			*resultCount = 1;
 			break;
+		case 'F':
+			strcpy(results[0], "F");
+			*resultCount = 1;
+			break;
 		case 'L':
 			strcpy(results[0], "L");
 			strcpy(results[1], "l");
@@ -331,7 +335,21 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 
 	    }
 
-	    // TODO swap
+	    // swap
+	    else if (op == 0X5f) {
+
+		    operandCount = 2;
+		    resultsCount = 2;
+
+		    if (h <= 1) die("not enough stack to swap\n");
+
+		    strcpy(operands[0], stack[h-2]);
+		    strcpy(operands[1], stack[h-1]);
+		    strcpy(results[0], stack[h-1]);
+		    strcpy(results[1], stack[h-2]);
+
+	    }
+
 	    // TODO areturn
 	    // TODO athrow
 	    // TODO wide :(
