@@ -197,7 +197,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 
 	    // set change bit to 0 in this entry;
 	    d->changed = FALSE;
-	    print_deet(d, m);
+	    //print_deet(d, m);
 
 	    // p = bytecode position in this entry;
 	    int p = d->bytecodePosition;
@@ -383,7 +383,42 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		        stackHeightWasSet	= (previousH >= 0);
 
 		    if (stackHeightWasSet && previousH != h) die("stack mismatch (old: %i; new: %i; at %i)\n", previousH, h, p);
-		    // TODO check types
+	
+
+		    char result[MAX_BUFFER_SIZE];
+		    if (strcmp(deets[q].locals[i],"U")) { // local is defined
+			    for (i = 0;i < m->max_locals; ++i) {
+				coolLUB(locals[i], deets[q].locals[i], result);
+				
+				if (!strcmp(result,"X")) die("locals mismatch on merge: local:%s; deet.local:%s\n", locals[i], deets[q].locals[i]);
+
+				if (strcmp(result, deets[q].locals[i])) {
+					deets[q].changed = TRUE;
+					strcpy(deets[q].locals[i], result);
+				}
+			    }
+		    }
+		    else {
+			strcpy(deets[q].locals[i], locals[i]);
+			deets[q].changed = TRUE;
+		    }
+
+		    if (strcmp(deets[q].stack[i],"-")) { // stack is defined
+			    for (i = 0; i < h; ++i) {
+				coolLUB(stack[i], deets[q].stack[i], result);
+
+				if (!strcmp(result, "X")) die("stack mismatch on merge: stack:%s; deet.stack:%s\n", stack[i], deets[q].stack[i]);
+
+				if (strcmp(result, deets[q].stack[i])) {
+					deets[q].changed = TRUE;
+					strcpy(deets[q].stack[i], result);
+				}
+			    }
+		    }
+		    else {
+			deets[q].changed = TRUE;
+			strcpy(deets[q].stack[i], result);
+		    }
 
 		    // merge h and t with the entry in D, updating that entry;
 		    deets[q].stackHeight = h;
