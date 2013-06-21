@@ -68,8 +68,7 @@ void load(
 	case 0X17: // "fload", 
 	case 0X18: // "dload", 
 	case 0X19: // "aload", 
-		// TODO load from next byte(s)
-		die("unsupported load\n");
+		localIndex = (m->code[d->bytecodePosition+1]);
 		break;
 
 	case 0X2e: // "iaload",
