@@ -23,7 +23,7 @@ unsigned int immediate_var1_codes[] = {0x1b, 0x1f, 0x23, 0x27, 0x2b, 0x3c, 0x40,
 unsigned int immediate_var2_codes[] = {0x1c, 0x20, 0x24, 0x28, 0x2c, 0x3d, 0x41, 0x45, 0x49, 0x4d};
 unsigned int immediate_var3_codes[] = {0x1d, 0x21, 0x25, 0x29, 0x2d, 0x3e, 0x42, 0x46, 0x4a, 0x4e};
 unsigned int return_codes[] = {0Xac, 0Xad, 0Xae, 0Xaf, 0Xb0, 0Xb1};
-unsigned int branch_codes[] = {0X99, 0X9a, 0X9b, 0X9c, 0X9d, 0X9e, 0X9f, 0Xa0, 0Xa1, 0Xa2, 0Xa3, 0Xa4, 0Xa5, 0Xa6};
+unsigned int branch_codes[] = {0X99, 0X9a, 0X9b, 0X9c, 0X9d, 0X9e, 0X9f, 0Xa0, 0Xa1, 0Xa2, 0Xa3, 0Xa4, 0Xa5, 0Xa6, 0xc6, 0xc7};
 unsigned int invoke_codes[] = {0Xb6, 0Xb7, 0Xb8, 0Xb9, 0Xba};
 unsigned int static_invoke_codes[] = {0Xb8};
 unsigned int produces_reference_codes[] = {0X2a, 0X2b, 0X2c, 0X2d}; // needs more
@@ -80,10 +80,13 @@ static void printTypeCodesArray( char **vstate, method_info *m, char *name ) {
         fprintf(stdout, "  S%d:  %s\n", i, *vstate++);
 }
 
-// Opcodes can branch to 1 or more possible branches
+// Opcodes can branch to 0, 1, or 2 instructions
 void get_next_bytecode_positions(deet* d, method_info* m, int* qs) {
 
 	int op = m->code[d->bytecodePosition];
+
+	// Return statements have no next instructions
+	if (is_return_instruction(op)) return;
 
 	// The immediate next instruction
 	int numberOfAdditionalBytes = strlen(opcodes[op].inlineOperands);
@@ -121,25 +124,6 @@ void parse_results(char* returnType, char results[MAX_NUMBER_OF_SLOTS][MAX_BUFFE
 		default:
 			// Void - copy nothing
 			*resultCount = 0;
-			break;
-	}
-}
-
-void get_reference_type(deet* d, method_info* m, char results[MAX_NUMBER_OF_SLOTS][MAX_BUFFER_SIZE]) {
-	switch (m->code[d->bytecodePosition]) {
-		case 0X2a: // aload_0
-			strcpy(results[0], d->locals[0]);
-			break;
-		case 0X2b: // aload_1
-			strcpy(results[0], d->locals[1]);
-			break;
-		case 0X2c: // aload_2
-			strcpy(results[0], d->locals[2]);
-			break;
-		case 0X2d: // aload_3
-			strcpy(results[0], d->locals[3]);
-			break;
-		default:
 			break;
 	}
 }
@@ -290,6 +274,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    }
 
 	   // ldc
+	   // TODO ldc_w, ldc2_w
 	    else if (op == 0x12) {
 
 		    operandCount = 0;
@@ -313,6 +298,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 	    }
 
 	    // dup
+	    // TODO dup_x1, dup_x2, dup2, dup2_x1, dup2_x2
 	    else if (op == 0X59) {
 
 		    operandCount = 1;
@@ -324,6 +310,14 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    strcpy(results[0], stack[h-1]);
 		    strcpy(results[1], stack[h-1]);
 	    }
+
+	    // TODO pop, pop2
+	    // TODO swap
+	    // TODO areturn
+	    // TODO athrow
+	    // TODO wide :(
+	    // TODO multianewarray
+	    // TODO jsr_w
 
 	    // Regular instructions:
 	    else {
@@ -337,6 +331,7 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 
 		    // Copy the lhs characters
 		    // Since we're reading these from the opcodes, each stack value should be one character (reference is just an A)
+		    // TODO think about instructions which take *any* reference type (arraylength, instanceof, checkcast, monitor*, ifnull, ifnonnull)
 		    lhsSize = strcspn(signature, ">");
 		    strncpy(lhs, signature, lhsSize);
 		    for (i = 0; i < lhsSize; ++i) {
@@ -345,13 +340,9 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    operandCount = lhsSize;
 
 		    // Copy the rhs characters. Also one character to one stack value.
+		    // TODO think about instructions which produce *any* reference type
 		    strcpy(rhs, (signature + lhsSize + 1));
 		    parse_results(rhs, results, &resultsCount);
-
-		    if (is_produces_reference_instruction(op)) {
-		    	get_reference_type(d, m, results);
-			resultsCount = 1;
-		    }
 	    }
 
 	    // foreach stack operand accessed by op do
@@ -376,9 +367,6 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 		    ++h;
 		    if (h > m->max_stack) die("stack overflow (%i/%i with %s)\n", h, m->max_stack, opcodes[op].opcodeName);
 	    }
-
-	    // only check next position if instruction is not a return
-	    if (is_return_instruction(op)) continue;
 
 	    // for q = the bytecode position of each instruction that
 	    //         can execute immediately after op at position p do

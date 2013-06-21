@@ -30,6 +30,7 @@ void coolLUB(char* type1, char* type2, char*result) {
 			break;
 
 		// Reference types
+		// TODO include null (N?)
 		case 'A':
 			if (*type2 != 'A') {
 
