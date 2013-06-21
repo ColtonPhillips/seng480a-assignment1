@@ -350,8 +350,15 @@ static void verifyMethod( ClassFile *cf, method_info *m ) {
 
 	    }
 
-	    // TODO areturn
-	    // TODO athrow
+	    // athrow
+	    else if (op == 0Xb0) {
+
+		    operandCount = 1;
+		    resultsCount = 0;
+
+		    strcpy(operands[0], "ALjava/lang/Object");
+	    }
+
 	    // TODO wide :(
 	    // TODO multianewarray
 	    // TODO jsr_w
