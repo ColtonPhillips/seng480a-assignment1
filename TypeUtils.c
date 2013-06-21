@@ -39,6 +39,7 @@ void coolLUB(char* type1, char* type2, char*result) {
 
 			else {
 
+				printf("lubing %s and %s\n", type1, type2);
 				char	*type1_copy	= SafeStrdup(type1),
 					*type2_copy	= SafeStrdup(type2),
 					*lub		= LUB(type1_copy, type2_copy);
@@ -46,7 +47,7 @@ void coolLUB(char* type1, char* type2, char*result) {
 				strcpy(result, lub);
 
 				if (strcmp(lub, "X")) {
-					
+
 					SafeFree(lub);
 				}
 			}
