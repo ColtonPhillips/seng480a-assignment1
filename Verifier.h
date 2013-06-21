@@ -1,3 +1,5 @@
+// Tom Gibson 
+// Colton Phillips
 /* Verify.h */
 
 #ifndef VERIFYH

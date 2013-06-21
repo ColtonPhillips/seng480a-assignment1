@@ -1,3 +1,5 @@
+// Tom Gibson
+// Colton Phillips
 /* VerifyData.h */
 
 #ifndef VERIFYDATAH

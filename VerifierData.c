@@ -1,3 +1,5 @@
+// Tom Gibson
+// Colton Phillips
 /* VerifierData.c */
 #include "VerifierData.h"
 #include <stdio.h>

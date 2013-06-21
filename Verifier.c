@@ -1,3 +1,5 @@
+// Colton Phillips
+// Tom Gibson
 /* Verifier.c */
 
 #include <stdio.h>

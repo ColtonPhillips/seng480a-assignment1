@@ -1,3 +1,5 @@
+// Tom Gibson 
+// Colton Phillips
 /* Util.h */
 
 #ifndef UTILH

@@ -1,3 +1,5 @@
+// Colton Phillips
+// Tom Gibson 
 /* VerifierUtils.c */
 
 // Note: two major errors in AnalyzeInvoke corrected.  15:00, 8 June 2013.
