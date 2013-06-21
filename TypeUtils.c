@@ -13,7 +13,7 @@ void coolLUB(char* type1, char* type2, char*result) {
 	switch(*type1) {
 
 		// Simple types
-		case 'I': case 'D': case 'd': case 'L': case 'l':
+		case 'I': case 'F': case 'D': case 'd': case 'L': case 'l':
 			
 			typesMatch = (strcmp(type1, type2) == 0);
 
