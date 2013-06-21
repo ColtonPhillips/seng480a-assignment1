@@ -3,8 +3,12 @@ Assignment 1
 JVM Verification
 
 Colton Phillips V00680089
-Tom Gibson V
+Tom Gibson V00684751
 
-Files Modified:
-Verifier
+github repo:
+
+http://github.com/ColtonPhillips/seng480a-assignment1
+git@github.com:ColtonPhillips/seng480a-assignment1.git
+
+
 
