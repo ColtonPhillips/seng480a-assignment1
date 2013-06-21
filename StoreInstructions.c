@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-unsigned int store_codes[] = {0X36, 0X37, 0X38, 0X39, 0X3a, 0X3b, 0X3c, 0X3d, 0X3e, 0X3f, 0X40, 0X41, 0X42, 0X43, 0X44, 0X45, 0X46, 0X47, 0X48, 0X49, 0X4a, 0X4b, 0X4c, 0X4d, 0X4e, 0X4f, 0X50, 0X51, 0X52, 0X53, 0X54, 0X55, 0X56};
+unsigned int store_codes[] = {0X36, 0X37, 0X38, 0X39, 0X3a, 0X3b, 0X3c, 0X3d, 0X3e, 0X3f, 0X40, 0X41, 0X42, 0X43, 0X44, 0X45, 0X46, 0X47, 0X48, 0X49, 0X4a, 0X4b, 0X4c, 0X4d, 0X4e};
 
 int is_store_instruction(int op) {
 
@@ -34,8 +34,7 @@ void store(
 	case 0X38: // "fstore",  
 	case 0X39: // "dstore",  
 	case 0X3a: // "astore",  
-		// TODO read next byte(s) for index
-		die("unsupported store instruction");
+		localIndex = m->code[d->bytecodePosition + 1];
 		break;
 
 	case 0X3b: // "istore_0",
@@ -68,17 +67,6 @@ void store(
 	case 0X4a: // "dstore_3",
 	case 0X4e: // "astore_3",
 		localIndex = 3;
-		break;
-
-	case 0X4f: // "iastore", 
-	case 0X50: // "lastore", 
-	case 0X51: // "fastore", 
-	case 0X52: // "dastore", 
-	case 0X53: // "aastore", 
-	case 0X54: // "bastore", 
-	case 0X55: // "castore", 
-	case 0X56: // "sastore", 
-		die("unsupported store instruction\n");
 		break;
 	}
 
@@ -134,17 +122,6 @@ void store(
 		*operandCount = 1;
 		strcpy(locals[localIndex], stack[stackHeight - 1]);
 		strcpy(operands[0], "ALjava/lang/Object");
-		break;
-
-	case 0X4f: // "iastore", 
-	case 0X50: // "lastore", 
-	case 0X51: // "fastore", 
-	case 0X52: // "dastore", 
-	case 0X53: // "aastore", 
-	case 0X54: // "bastore", 
-	case 0X55: // "castore", 
-	case 0X56: // "sastore", 
-		die("unsupported store instruction\n");
 		break;
 	}
 }
